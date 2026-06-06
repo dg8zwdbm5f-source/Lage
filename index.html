@@ -5,20 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Despesas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:      #0a0a0a;
-  --bg-2:    #111111;
   --bg-3:    #161616;
   --bg-4:    #1e1e1e;
   --line:    rgba(255,255,255,0.06);
   --line-2:  rgba(255,255,255,0.10);
   --txt:     #f2f2f2;
   --txt-2:   rgba(242,242,242,0.40);
-  --txt-3:   rgba(242,242,242,0.16);
+  --txt-3:   rgba(242,242,242,0.18);
   --accent:  #d4b896;
-  --accent-d:#a8875a;
   --radius:  16px;
   --radius-s:10px;
 }
@@ -53,7 +51,6 @@ body {
   font-size: 22px;
   font-weight: 500;
   letter-spacing: -0.3px;
-  color: var(--txt);
 }
 .hdr-badge {
   background: var(--bg-3);
@@ -73,7 +70,7 @@ body {
   border-radius: var(--radius);
   background: var(--bg-3);
   border: 0.5px solid var(--line-2);
-  padding: 24px 20px 20px;
+  padding: 24px 20px 0;
 }
 .hero-label {
   font-size: 11px;
@@ -113,34 +110,28 @@ body {
 }
 #fValor::placeholder { color: var(--txt-3); }
 
-.hero-divider { height: 0.5px; background: var(--line); margin-bottom: 16px; }
-
-.hero-bottom { display: flex; align-items: center; gap: 12px; }
-.hero-bottom-label { font-size: 13px; color: var(--txt-2); flex: 1; }
-
-.parcelas-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.parc-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 0.5px solid var(--line-2);
-  background: var(--bg-4);
-  color: var(--txt-3);
-  font-family: 'Geist', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
+/* ── PARCELAS ROW (tap dentro do hero) ── */
+.hero-tap {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  border-top: 0.5px solid var(--line);
+  padding: 0 4px;
+  min-height: 48px;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: 'Geist', sans-serif;
+  -webkit-appearance: none;
+  transition: background 0.1s;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
-.parc-btn.active {
-  background: rgba(212,184,150,0.12);
-  border-color: rgba(212,184,150,0.35);
-  color: var(--accent);
-}
-.parc-btn:active { opacity: 0.6; }
+.hero-tap:active { background: rgba(255,255,255,0.03); }
+.hero-tap-lbl { font-size: 13px; color: var(--txt-2); flex: 1; text-align: left; }
+.hero-tap-val { font-size: 15px; color: var(--accent); font-family: 'Geist Mono', monospace; font-weight: 300; margin-right: 8px; }
+.hero-tap-chev { opacity: 0.15; color: var(--txt); flex-shrink: 0; }
 
 /* ── SECTION LABEL ── */
 .slbl {
@@ -189,7 +180,6 @@ body {
   font-family: 'Geist', sans-serif;
   padding: 0;
   width: 100%;
-  font-weight: 400;
 }
 .tr-input::placeholder { color: var(--txt-3); }
 
@@ -206,7 +196,6 @@ body {
   border-bottom: 0.5px solid var(--line);
   cursor: pointer;
   font-family: 'Geist', sans-serif;
-  position: relative;
   -webkit-appearance: none;
   transition: background 0.1s;
 }
@@ -221,7 +210,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 400;
 }
 .tap-val.set { color: var(--accent); }
 .tap-chev { flex-shrink: 0; opacity: 0.15; color: var(--txt); }
@@ -243,7 +231,6 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  letter-spacing: -0.1px;
   -webkit-appearance: none;
   transition: opacity 0.15s, transform 0.1s;
 }
@@ -278,10 +265,10 @@ body {
   padding: 14px 18px;
   border-bottom: 0.5px solid var(--line);
 }
-.picker-title { font-size: 14px; font-weight: 500; color: var(--txt); }
+.picker-title  { font-size: 14px; font-weight: 500; color: var(--txt); }
 .picker-cancel { font-size: 14px; color: var(--txt-2); background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'Geist', sans-serif; }
-.picker-done { font-size: 14px; font-weight: 500; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'Geist', sans-serif; }
-.picker-body { padding: 12px 14px 10px; }
+.picker-done   { font-size: 14px; font-weight: 500; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'Geist', sans-serif; }
+.picker-body   { padding: 12px 14px 10px; }
 
 .date-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 6px; margin-bottom: 10px; }
 .date-grid select {
@@ -292,7 +279,6 @@ body {
   color: var(--txt);
   font-family: 'Geist', sans-serif;
   font-size: 14px;
-  font-weight: 400;
   padding: 12px 6px;
   text-align: center;
   outline: none;
@@ -329,7 +315,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-weight: 400;
   -webkit-appearance: none;
   transition: background 0.08s;
 }
@@ -350,7 +335,6 @@ body {
   border-radius: 100px;
   padding: 11px 20px 11px 12px;
   font-size: 13px;
-  font-weight: 400;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -362,8 +346,8 @@ body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .t-ic { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.toast.ok .t-ic { background: rgba(48,209,88,0.15); color: #30d158; }
-.toast.err .t-ic { background: rgba(255,69,58,0.15); color: #ff453a; }
+.toast.ok  .t-ic { background: rgba(48,209,88,0.15);  color: #30d158; }
+.toast.err .t-ic { background: rgba(255,69,58,0.15);  color: #ff453a; }
 
 @keyframes sp { to { transform: rotate(360deg); } }
 .spin { width: 16px; height: 16px; border: 2px solid rgba(10,10,10,0.15); border-top-color: var(--bg); border-radius: 50%; animation: sp 0.7s linear infinite; }
@@ -380,16 +364,18 @@ body {
 </div>
 
 <div class="hero">
-  <div class="hero-label">Valor da despesa</div>
-  <div class="hero-amount-row">
-    <span class="hero-currency">R$</span>
-    <input type="text" id="fValor" inputmode="decimal" placeholder="0,00" autocomplete="off">
+  <div style="padding:0 0 4px">
+    <div class="hero-label">Valor da despesa</div>
+    <div class="hero-amount-row">
+      <span class="hero-currency">R$</span>
+      <input type="text" id="fValor" inputmode="decimal" placeholder="0,00" autocomplete="off">
+    </div>
   </div>
-  <div class="hero-divider"></div>
-  <div class="hero-bottom">
-    <span class="hero-bottom-label">Parcelas</span>
-    <div class="parcelas-row" id="parcelasRow"></div>
-  </div>
+  <button type="button" class="hero-tap" id="btn-parcelas">
+    <span class="hero-tap-lbl">Parcelas</span>
+    <span class="hero-tap-val" id="vParcelas">1×</span>
+    <svg class="hero-tap-chev" width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
 </div>
 
 <div class="slbl">Identificação</div>
@@ -477,7 +463,7 @@ body {
   </div>
 </div>
 
-<!-- Option Modal -->
+<!-- Option Modal (datas, classificação e parcelas) -->
 <div class="picker-overlay" id="optModal">
   <div class="picker-sheet">
     <div class="picker-nav">
@@ -519,12 +505,14 @@ var OPTIONS = {
   centro:  ['Alex','Bernardo','Casa','Família','Luna','Mel','Sabrina','Terceiros','Thor'],
   sub:     ['Açougue','Doceteria','Fast Food','Mercado','Padaria','Restaurante','Telefonia e internet','Curso','Escola','Assinaturas','Bares','Cartão Sabrina','Cinema','Festa','Hospedagem','Cama, Mesa e Banho','Eletrodomésticos','Empréstimo Residencial','Impostos e taxas de moradia','Luz, Água e Gás','Manutenção Residencial','Mobilia','Obra e construção','Utensílios domésticos','Cuidado Pessoal','Doação','Eletroeletrônicos','Empréstimo Pessoal','Estética Pessoal','Impostos e taxas pessoais','Manutenção Equipamentos','Vestuário','Pets - Acessório','Pets - Alimentação','Pets - Saúde','Pets - Serviços','Academia','Esporte','Farmácia','Suplementação','Presente','Terceiro','Combustível','Empréstimo Veicular','Estacionamento','Estética Automotiva','Impostos e taxas do veículo','Manutenção Veicular','Pedágio','Seguro','Uber'],
   pagador: ['Alex','Sabrina','Ambos'],
-  status:  ['Pendente','Efetuado']
+  status:  ['Pendente','Efetuado'],
+  parcelas: ['1×','2×','3×','4×','5×','6×','7×','8×','9×','10×','11×','12×']
 };
 
 var currentDateTipo = '';
 var currentOptField = '';
 
+/* ── DAYS SELECT ── */
 (function(){
   var s = document.getElementById('pDia');
   for(var i=1;i<=31;i++){
@@ -534,26 +522,8 @@ var currentOptField = '';
   }
 })();
 
-(function(){
-  var row = document.getElementById('parcelasRow');
-  for(var n=1;n<=12;n++){
-    (function(num){
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'parc-btn' + (num===1?' active':'');
-      btn.textContent = num;
-      btn.dataset.n = num;
-      btn.onclick = function(){
-        state.parcela = num;
-        document.querySelectorAll('.parc-btn').forEach(function(b){ b.classList.remove('active'); });
-        btn.classList.add('active');
-      };
-      row.appendChild(btn);
-    })(n);
-  }
-})();
-
-function setDate(tipo, dia, mes, ano){
+/* ── DATES ── */
+function setDate(tipo,dia,mes,ano){
   state[tipo].dia=dia; state[tipo].mes=mes; state[tipo].ano=ano;
   state[tipo].iso=ano+'-'+mes+'-'+dia;
   var label=dia+' '+MESES[parseInt(mes,10)-1].slice(0,3).toLowerCase()+' '+ano;
@@ -581,42 +551,46 @@ function openDate(tipo){
   document.getElementById('pAno').value=state[tipo].ano||'2026';
   document.getElementById('dateModal').classList.add('open');
 }
-
 function confirmDate(){
-  var dia=document.getElementById('pDia').value;
-  var mes=document.getElementById('pMes').value;
-  var ano=document.getElementById('pAno').value;
-  setDate(currentDateTipo,dia,mes,ano);
+  setDate(currentDateTipo,
+    document.getElementById('pDia').value,
+    document.getElementById('pMes').value,
+    document.getElementById('pAno').value);
   closeModal();
 }
 
+/* ── PICKER ── */
 function renderOpts(opts, cur, field){
   var list=document.getElementById('optList');
   list.innerHTML='';
-  for(var i=0;i<opts.length;i++){
-    (function(opt){
-      var btn=document.createElement('button');
-      btn.type='button';
-      btn.className='opt-item'+(cur===opt?' selected':'');
-      btn.innerHTML='<span>'+opt+'</span>'+(cur===opt?'<span class="opt-check">✓</span>':'');
-      btn.onclick=function(){
+  opts.forEach(function(opt){
+    var btn=document.createElement('button');
+    btn.type='button';
+    btn.className='opt-item'+(cur===opt?' selected':'');
+    btn.innerHTML='<span>'+opt+'</span>'+(cur===opt?'<span class="opt-check">✓</span>':'');
+    btn.onclick=function(){
+      if(field==='parcelas'){
+        state.parcela=parseInt(opt);
+        var el=document.getElementById('vParcelas');
+        if(el) el.textContent=opt;
+      } else {
         state[field]=opt;
         var lblId={conta:'vConta',centro:'vCentro',sub:'vSub',pagador:'vPagador',status:'vStatus'}[field];
         var el=document.getElementById(lblId);
         if(el){ el.textContent=opt; el.classList.add('set'); }
-        closeModal();
-      };
-      list.appendChild(btn);
-    })(opts[i]);
-  }
+      }
+      closeModal();
+    };
+    list.appendChild(btn);
+  });
 }
 
 function openPicker(field){
   currentOptField=field;
-  var titles={conta:'Conta',centro:'Centro de Custo',sub:'Subcategoria',pagador:'Pagador',status:'Status'};
-  document.getElementById('optModalTitle').textContent=titles[field];
+  var titles={conta:'Conta',centro:'Centro de Custo',sub:'Subcategoria',pagador:'Pagador',status:'Status',parcelas:'Parcelas'};
+  document.getElementById('optModalTitle').textContent=titles[field]||'Selecionar';
   var opts=OPTIONS[field];
-  var cur=state[field];
+  var cur=field==='parcelas'?state.parcela+'×':state[field];
   var searchWrap=document.getElementById('optSearchWrap');
   var searchInput=document.getElementById('optSearch');
   var hasSearch=(field==='sub'||field==='centro');
@@ -626,8 +600,7 @@ function openPicker(field){
   if(hasSearch){
     searchInput.oninput=function(){
       var q=searchInput.value.toLowerCase();
-      var filtered=opts.filter(function(o){ return o.toLowerCase().indexOf(q)!==-1; });
-      renderOpts(filtered,cur,field);
+      renderOpts(opts.filter(function(o){ return o.toLowerCase().indexOf(q)!==-1; }),cur,field);
     };
     setTimeout(function(){ searchInput.focus(); },150);
   }
@@ -640,37 +613,40 @@ function closeModal(){
   document.getElementById('optSearch').value='';
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+/* ── EVENTS ── */
+document.addEventListener('DOMContentLoaded',function(){
   initDates();
   var bind=function(id,fn){ var el=document.getElementById(id); if(el) el.addEventListener('click',fn); };
-  bind('btn-compra',function(){ openDate('compra'); });
-  bind('btn-venc',  function(){ openDate('venc'); });
-  bind('btn-conta', function(){ openPicker('conta'); });
-  bind('btn-centro',function(){ openPicker('centro'); });
-  bind('btn-sub',   function(){ openPicker('sub'); });
-  bind('btn-pagador',function(){ openPicker('pagador'); });
-  bind('btn-status',function(){ openPicker('status'); });
-  bind('dateCancel',closeModal);
-  bind('optCancel', closeModal);
-  bind('dateDone',  confirmDate);
-  bind('fBtn',      enviar);
+  bind('btn-parcelas',function(){ openPicker('parcelas'); });
+  bind('btn-compra',  function(){ openDate('compra'); });
+  bind('btn-venc',    function(){ openDate('venc'); });
+  bind('btn-conta',   function(){ openPicker('conta'); });
+  bind('btn-centro',  function(){ openPicker('centro'); });
+  bind('btn-sub',     function(){ openPicker('sub'); });
+  bind('btn-pagador', function(){ openPicker('pagador'); });
+  bind('btn-status',  function(){ openPicker('status'); });
+  bind('dateCancel',  closeModal);
+  bind('optCancel',   closeModal);
+  bind('dateDone',    confirmDate);
+  bind('fBtn',        enviar);
   document.getElementById('dateModal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
   document.getElementById('optModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
 });
 
+/* ── ENVIAR ── */
 function enviar(){
   var valorRaw=document.getElementById('fValor').value.replace(',','.');
   var erros=[
-    {val:state.compra.iso,   nome:'Data da compra'},
-    {val:state.venc.iso,     nome:'Vencimento'},
+    {val:state.compra.iso,                             nome:'Data da compra'},
+    {val:state.venc.iso,                               nome:'Vencimento'},
     {val:document.getElementById('fFornecedor').value, nome:'Fornecedor'},
     {val:document.getElementById('fDescricao').value,  nome:'Descrição'},
-    {val:valorRaw,           nome:'Valor'},
-    {val:state.conta,        nome:'Conta'},
-    {val:state.centro,       nome:'Centro de Custo'},
-    {val:state.sub,          nome:'Subcategoria'},
-    {val:state.pagador,      nome:'Pagador'},
-    {val:state.status,       nome:'Status'}
+    {val:valorRaw,                                     nome:'Valor'},
+    {val:state.conta,                                  nome:'Conta'},
+    {val:state.centro,                                 nome:'Centro de Custo'},
+    {val:state.sub,                                    nome:'Subcategoria'},
+    {val:state.pagador,                                nome:'Pagador'},
+    {val:state.status,                                 nome:'Status'}
   ];
   for(var i=0;i<erros.length;i++){
     if(!erros[i].val){ showToast('Preencha: '+erros[i].nome,'err'); return; }
@@ -680,17 +656,17 @@ function enviar(){
   btn.disabled=true;
   txt.innerHTML='<div class="spin"></div>';
   var dados={
-    dataCompra:  state.compra.iso,
-    fornecedor:  document.getElementById('fFornecedor').value,
-    descricao:   document.getElementById('fDescricao').value,
-    parcela:     state.parcela,
-    valor:       parseFloat(valorRaw),
-    conta:       state.conta,
-    centroCusto: state.centro,
-    subcategoria:state.sub,
-    pagador:     state.pagador,
-    vencimento:  state.venc.iso,
-    status:      state.status
+    dataCompra:   state.compra.iso,
+    fornecedor:   document.getElementById('fFornecedor').value,
+    descricao:    document.getElementById('fDescricao').value,
+    parcela:      state.parcela,
+    valor:        parseFloat(valorRaw),
+    conta:        state.conta,
+    centroCusto:  state.centro,
+    subcategoria: state.sub,
+    pagador:      state.pagador,
+    vencimento:   state.venc.iso,
+    status:       state.status
   };
   var formBody=[];
   for(var p in dados){ formBody.push(encodeURIComponent(p)+'='+encodeURIComponent(dados[p])); }
@@ -700,13 +676,14 @@ function enviar(){
   .finally(function(){ btn.disabled=false; txt.textContent='Adicionar Gasto'; });
 }
 
+/* ── RESET ── */
 function resetForm(){
   initDates();
   document.getElementById('fFornecedor').value='';
   document.getElementById('fDescricao').value='';
   document.getElementById('fValor').value='';
   state.parcela=1;
-  document.querySelectorAll('.parc-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.n==='1'); });
+  document.getElementById('vParcelas').textContent='1×';
   var fields=['conta','centro','sub','pagador','status'];
   var lbls  =['vConta','vCentro','vSub','vPagador','vStatus'];
   for(var i=0;i<fields.length;i++){
@@ -720,6 +697,7 @@ function resetForm(){
   window.scrollTo(0,0);
 }
 
+/* ── TOAST ── */
 function showToast(msg,type){
   var t=document.getElementById('toast');
   document.getElementById('t-ic').textContent=type==='ok'?'✓':'✕';
