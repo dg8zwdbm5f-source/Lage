@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>V-Shape · Alex</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+:root{
+  --bg:#0f0f0f;--s1:#171717;--s2:#1f1f1f;--s3:#272727;
+  --border:#2c2c2c;--gold:#c9a84c;--gold2:#e8c96a;
+  --gdim:rgba(201,168,76,.12);--text:#f0f0f0;--muted:#888;--dim:#444;
+  --green:#5ebd7a;--red:#e05555;--blue:#5b9bd5;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;background:var(--bg);}
+.hdr-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);}
+.hdr-sub{font-size:11px;color:var(--muted);margin-top:-2px;}
+.hdr-nav{display:flex;gap:6px;}
+.nav-btn{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+.nav-btn:hover,.nav-btn.active{background:var(--gdim);border-color:var(--gold);color:var(--gold);}
+
+/* ── WEEK STRIP ── */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);background:var(--s1);}
+.dc{padding:9px 4px;text-align:center;cursor:pointer;transition:background .15s;border-right:1px solid var(--border);}
+.dc:last-child{border-right:none;}
+.dc:hover{background:var(--s2);}
+.dc.active{background:var(--gdim);}
+.dc .dow{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.dc .lbl{font-size:11px;font-weight:700;margin-top:3px;color:var(--text);}
+.dc.active .lbl{color:var(--gold);}
+.dc .pip{width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:var(--dim);}
+.dc.treino .pip{background:var(--gold);}
+.dc.cardio .pip{background:var(--green);}
+.dc.done .pip{background:var(--green) !important;}
+
+/* ── SCREENS ── */
+.screen{display:none;max-width:600px;margin:0 auto;padding:16px 14px 80px;}
+.screen.active{display:block;}
+
+/* ── DAY HEADER ── */
+.day-hdr{margin-bottom:16px;}
+.day-hdr h2{font-size:16px;font-weight:700;}
+.day-hdr p{font-size:12px;color:var(--muted);margin-top:2px;}
+.day-hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+
+/* ── BLOCK ── */
+.blk{margin-bottom:20px;}
+.blk-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:0;}
+
+/* ── EXERCISE ROW ── */
+.ex-row{border-bottom:1px solid #1d1d1d;padding:10px 0;}
+.ex-row:last-child{border-bottom:none;}
+.ex-top{display:flex;align-items:center;gap:10px;}
+.ex-info{flex:1;min-width:0;}
+.ex-name{font-size:13px;font-weight:600;color:var(--text);}
+.ex-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+.ex-sets-lbl{font-size:11px;color:var(--muted);}
+.focus-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:var(--gdim);color:var(--gold);letter-spacing:.3px;}
+.ex-actions{display:flex;gap:6px;flex-shrink:0;}
+.yt-btn{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:5px 8px;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s;font-family:'Inter',sans-serif;}
+.yt-btn:hover{border-color:#e05555;color:#e05555;}
+.log-btn{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+.log-btn:hover{border-color:var(--gold);color:var(--gold);}
+.log-btn.has-log{border-color:var(--green);color:var(--green);}
+
+/* ── LOG PANEL (inline, collapses) ── */
+.log-panel{overflow:hidden;max-height:0;transition:max-height .25s ease;}
+.log-panel.open{max-height:400px;}
+.log-inner{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;}
+.log-last{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.log-last strong{color:var(--green);}
+.log-inputs{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:end;}
+.log-field{display:flex;flex-direction:column;gap:3px;}
+.log-field label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;}
+.log-field input{background:var(--s3);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:7px 8px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;width:100%;outline:none;}
+.log-field input:focus{border-color:var(--gold);}
+.save-btn{background:var(--gold);border:none;color:#000;border-radius:5px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;height:34px;}
+.save-btn:hover{background:var(--gold2);}
+
+/* ── FINISH SESSION ── */
+.finish-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;padding:12px 16px;background:var(--s1);border-top:1px solid var(--border);display:none;}
+.finish-bar.show{display:block;}
+.finish-btn{width:100%;background:var(--gold);border:none;color:#000;border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.5px;}
+.finish-btn:hover{background:var(--gold2);}
+
+/* ── REST/CARDIO CARDS ── */
+.rest-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;}
+.rest-card .icon{font-size:28px;margin-bottom:8px;}
+.rest-card h3{font-size:15px;font-weight:700;margin-bottom:6px;}
+.rest-card p{font-size:12px;color:var(--muted);line-height:1.7;}
+.rest-card.green{border-color:rgba(94,189,122,.3);}
+.rest-card.green h3{color:var(--green);}
+
+/* ── HISTÓRICO SCREEN ── */
+.hist-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;}
+.sess-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;}
+.sess-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;}
+.sess-hdr:hover{background:var(--s2);}
+.sess-title{font-size:13px;font-weight:700;color:var(--text);}
+.sess-date{font-size:11px;color:var(--muted);}
+.sess-badge{font-size:10px;font-weight:700;background:var(--gdim);color:var(--gold);padding:2px 8px;border-radius:20px;}
+.sess-body{display:none;padding:0 14px 12px;}
+.sess-body.open{display:block;}
+.sess-ex{padding:6px 0;border-bottom:1px solid #1d1d1d;display:flex;justify-content:space-between;align-items:center;}
+.sess-ex:last-child{border-bottom:none;}
+.sess-ex-name{font-size:12px;color:var(--text);}
+.sess-ex-val{font-size:12px;color:var(--green);font-weight:600;}
+.del-sess{font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:2px 6px;font-family:'Inter',sans-serif;}
+.del-sess:hover{text-decoration:underline;}
+
+/* ── EVOLUÇÃO SCREEN ── */
+.evo-select-wrap{margin-bottom:16px;}
+.evo-select-wrap select{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.evo-select-wrap select:focus{border-color:var(--gold);}
+.chart-wrap{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;overflow-x:auto;}
+.chart-wrap h4{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.chart-empty{text-align:center;padding:24px;font-size:12px;color:var(--muted);}
+canvas{display:block;width:100%!important;}
+
+/* ── PR CARDS ── */
+.pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.pr-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.pr-card .pr-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.pr-card .pr-val{font-size:20px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:var(--gold);}
+.pr-card .pr-date{font-size:10px;color:var(--dim);margin-top:2px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#000;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:700;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-logo">V·SHAPE</div>
+    <div class="hdr-sub">Alex · 84kg · 170cm</div>
+  </div>
+  <div class="hdr-nav">
+    <button class="nav-btn active" onclick="showMain()">Treino</button>
+    <button class="nav-btn" onclick="showHist()">Histórico</button>
+    <button class="nav-btn" onclick="showEvo()">Evolução</button>
+  </div>
+</div>
+
+<!-- WEEK STRIP -->
+<div class="week-strip" id="weekStrip">
+  <div class="dc treino active" id="tab-seg" onclick="showDay('seg')">
+    <div class="dow">Seg</div><div class="lbl">A</div><div class="pip"></div>
+  </div>
+  <div class="dc treino" id="tab-ter" onclick="showDay('ter')">
+    <div class="dow">Ter</div><div class="lbl">B</div><div class="pip"></div>
+  </div>
+  <div class="dc cardio" id="tab-qua" onclick="showDay('qua')">
+    <div class="dow">Qua</div><div class="lbl">⚽</div><div class="pip"></div>
+  </div>
+  <div class="dc treino" id="tab-qui" onclick="showDay('qui')">
+    <div class="dow">Qui</div><div class="lbl">C</div><div class="pip"></div>
+  </div>
+  <div class="dc treino" id="tab-sex" onclick="showDay('sex')">
+    <div class="dow">Sex</div><div class="lbl">D</div><div class="pip"></div>
+  </div>
+  <div class="dc" id="tab-sab" onclick="showDay('sab')">
+    <div class="dow">Sáb</div><div class="lbl">flex</div><div class="pip"></div>
+  </div>
+  <div class="dc cardio" id="tab-dom" onclick="showDay('dom')">
+    <div class="dow">Dom</div><div class="lbl">🏃</div><div class="pip"></div>
+  </div>
+</div>
+
+<!-- MAIN / TREINO SCREEN -->
+<div class="screen active" id="screen-main">
+
+  <!-- ─── SEG / DIA A ─── -->
+  <div id="day-seg">
+    <div class="day-hdr">
+      <div class="day-hdr-row">
+        <div><h2>Segunda — Dia A</h2><p>Peito completo · Ombro · Tríceps</p></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-title">Peito</div>
+      <div id="ex-SEG-0" class="ex-row" data-day="SEG" data-idx="0" data-name="Supino Reto com Barra">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Supino Reto com Barra</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">PEITO MÉDIO ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Escápulas retraídas, pés no chão. Base do treino de peito.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=8UiTPNj66AU" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',0)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-0"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-0">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-0-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-0-s" placeholder="4" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-0-r" placeholder="10" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',0)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div id="ex-SEG-1" class="ex-row" data-day="SEG" data-idx="1" data-name="Supino Declinado com Barra">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Supino Declinado com Barra</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">PEITO INFERIOR ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Banco ~30° declinado. Ativa fortemente a porção inferior.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=9XqGE8PNrws" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',1)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-1"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-1">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-1-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-1-s" placeholder="4" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-1-r" placeholder="10" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',1)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div id="ex-SEG-2" class="ex-row" data-day="SEG" data-idx="2" data-name="Supino Inclinado com Barra">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Supino Inclinado com Barra</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 10–12</span><span class="focus-tag">PEITO SUPERIOR ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Banco 30–45°. Fecha o trabalho nas três porções do peitoral.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=oZjIQN0YMX0" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',2)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-2"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-2">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-2-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-2-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-2-r" placeholder="10" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',2)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div id="ex-SEG-3" class="ex-row" data-day="SEG" data-idx="3" data-name="Crossover Polia Alta">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Crossover Polia Alta</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span><span class="focus-tag">PEITO INFERIOR ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Cabo de cima para baixo. Segure 1s na contração.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=E3aha5zhlc0" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',3)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-3"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-3">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-3-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-3-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-3-r" placeholder="12" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',3)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div id="ex-SEG-4" class="ex-row" data-day="SEG" data-idx="4" data-name="Voador (Peck Deck)">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Voador (Peck Deck)</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Arco leve nos cotovelos. Ativa a região medial do peitoral.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=1D9x_U6PkY8" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',4)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-4"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-4">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-4-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-4-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-4-r" placeholder="12" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',4)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-title">Ombro</div>
+      <div id="ex-SEG-5" class="ex-row" data-day="SEG" data-idx="5" data-name="Desenvolvimento com Halteres">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Desenvolvimento com Halteres (sentado)</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">OMBRO ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Cotovelos alinhados com ombros na descida.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=0uB7PH3oFVo" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',5)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-5"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-5">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-5-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-5-s" placeholder="4" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-5-r" placeholder="10" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',5)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+      <div id="ex-SEG-6" class="ex-row" data-day="SEG" data-idx="6" data-name="Elevação Lateral no Cabo">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Elevação Lateral no Cabo (unilateral)</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">4 × 12–15</span><span class="focus-tag">LATERAL ⭐</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Cabo mantém tensão constante no topo do movimento.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=9zh-c9JQN9k" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',6)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-6"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-6">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-6-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-6-s" placeholder="4" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-6-r" placeholder="12" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',6)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+      <div id="ex-SEG-7" class="ex-row" data-day="SEG" data-idx="7" data-name="Elevação Lateral com Halteres">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Elevação Lateral com Halteres</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 15 (drop-set final)</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Drop-set na última série: reduza o peso e continue sem pausar.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=c7zMmbWkUPw" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',7)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-7"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-7">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-7-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-7-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-7-r" placeholder="15" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',7)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-title">Tríceps</div>
+      <div id="ex-SEG-8" class="ex-row" data-day="SEG" data-idx="8" data-name="Tríceps Testa Barra W">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Tríceps Testa com Barra W</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 10–12</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Cotovelos apontados para cima. Não abra os braços.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=LLpDSU-28FE" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',8)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-8"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-8">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-8-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-8-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-8-r" placeholder="10" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',8)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+      <div id="ex-SEG-9" class="ex-row" data-day="SEG" data-idx="9" data-name="Tríceps na Polia com Corda">
+        <div class="ex-top">
+          <div class="ex-info">
+            <div class="ex-name">Tríceps na Polia com Corda</div>
+            <div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div>
+            <div style="font-size:11px;color:var(--dim);margin-top:3px;">Abra a corda no final. Cotovelos fixos ao tronco.</div>
+          </div>
+          <div class="ex-actions">
+            <a class="yt-btn" href="https://www.youtube.com/watch?v=7le1JRUUagM" target="_blank">▶</a>
+            <button class="log-btn" onclick="toggleLog('SEG',9)">+ Carga</button>
+          </div>
+        </div>
+        <div class="log-panel" id="lp-SEG-9"><div class="log-inner">
+          <div class="log-last" id="ll-SEG-9">Nenhum registro ainda.</div>
+          <div class="log-inputs">
+            <div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEG-9-w" placeholder="0" min="0" step="0.5"></div>
+            <div class="log-field"><label>Séries</label><input type="number" id="li-SEG-9-s" placeholder="3" min="1" max="10"></div>
+            <div class="log-field"><label>Reps</label><input type="number" id="li-SEG-9-r" placeholder="12" min="1" max="50"></div>
+            <button class="save-btn" onclick="saveLog('SEG',9)">Salvar</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TER / DIA B ─── -->
+  <div id="day-ter" style="display:none">
+    <div class="day-hdr"><h2>Terça — Dia B</h2><p>Costas · Bíceps · Posterior de Coxa</p></div>
+    <div class="blk">
+      <div class="blk-title">Costas</div>
+      <div id="ex-TER-0" class="ex-row" data-day="TER" data-idx="0" data-name="Puxada Frente Aberta (Pulley)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Puxada Frente Aberta (Pulley)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">LATÍSSIMO ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pegada pronada aberta. Puxe para o queixo. Cotovelos para baixo e atrás.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=7Fdu_Kbentc" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',0)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-0"><div class="log-inner"><div class="log-last" id="ll-TER-0">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-0-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-0-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-0-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',0)">Salvar</button></div></div></div></div>
+      <div id="ex-TER-1" class="ex-row" data-day="TER" data-idx="1" data-name="Remada na Máquina (sentado)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Remada na Máquina (sentado)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">COSTAS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Puxe para o abdômen. Retraia as escápulas no final de cada rep.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=uQNhosSt0eo" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',1)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-1"><div class="log-inner"><div class="log-last" id="ll-TER-1">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-1-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-1-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-1-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',1)">Salvar</button></div></div></div></div>
+      <div id="ex-TER-2" class="ex-row" data-day="TER" data-idx="2" data-name="Remada Curvada com Barra"><div class="ex-top"><div class="ex-info"><div class="ex-name">Remada Curvada com Barra</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">COSTAS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Tronco ~45°. Puxe para o umbigo. Costas retas.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=VJHBEy2duVc" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',2)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-2"><div class="log-inner"><div class="log-last" id="ll-TER-2">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-2-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-2-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-2-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',2)">Salvar</button></div></div></div></div>
+      <div id="ex-TER-3" class="ex-row" data-day="TER" data-idx="3" data-name="Remada Unilateral com Halter"><div class="ex-top"><div class="ex-info"><div class="ex-name">Remada Unilateral com Halter</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 10–12 cada</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Amplitude máxima — braço totalmente estendido na descida.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=f8AVh4VBbos" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',3)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-3"><div class="log-inner"><div class="log-last" id="ll-TER-3">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-3-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-3-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-3-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',3)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Bíceps</div>
+      <div id="ex-TER-4" class="ex-row" data-day="TER" data-idx="4" data-name="Rosca Direta Barra W"><div class="ex-top"><div class="ex-info"><div class="ex-name">Rosca Direta com Barra W</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">BÍCEPS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Cotovelos fixos ao tronco. Não balance o corpo.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=017j7Gbxipo" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',4)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-4"><div class="log-inner"><div class="log-last" id="ll-TER-4">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-4-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-4-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-4-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',4)">Salvar</button></div></div></div></div>
+      <div id="ex-TER-5" class="ex-row" data-day="TER" data-idx="5" data-name="Rosca Martelo com Halteres"><div class="ex-top"><div class="ex-info"><div class="ex-name">Rosca Martelo com Halteres</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 10–12</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Polegar para cima. Ativa braquial — espessura no braço.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=xvvjkh3Aa4s" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',5)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-5"><div class="log-inner"><div class="log-last" id="ll-TER-5">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-5-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-5-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-5-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',5)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Posterior de Coxa</div>
+      <div id="ex-TER-6" class="ex-row" data-day="TER" data-idx="6" data-name="Stiff com Barra"><div class="ex-top"><div class="ex-info"><div class="ex-name">Stiff com Barra</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">ISQUIOS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Quadril para trás, costas retas. Sinta o estiramento.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=TuUmgN32cQQ" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',6)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-6"><div class="log-inner"><div class="log-last" id="ll-TER-6">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-6-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-6-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-6-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',6)">Salvar</button></div></div></div></div>
+      <div id="ex-TER-7" class="ex-row" data-day="TER" data-idx="7" data-name="Flexão de Joelho (máquina)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Flexão de Joelho (máquina deitado)</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 12</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pausa de 1s no topo. Descida controlada.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=I6bzu4eLoY8" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('TER',7)">+ Carga</button></div></div><div class="log-panel" id="lp-TER-7"><div class="log-inner"><div class="log-last" id="ll-TER-7">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-TER-7-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-TER-7-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-TER-7-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('TER',7)">Salvar</button></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ─── QUA ─── -->
+  <div id="day-qua" style="display:none">
+    <div class="day-hdr"><h2>Quarta — Cardio Ativo</h2><p>Sem academia</p></div>
+    <div class="rest-card green"><div class="icon">⚽</div><h3>Futvôlei ou Corrida Leve</h3><p>Esse dia cobre 100% do cardio semanal. Futvôlei = HIIT natural.<br><br>Se correr: 20–30 min ritmo leve e conversacional.</p></div>
+  </div>
+
+  <!-- ─── QUI / DIA C ─── -->
+  <div id="day-qui" style="display:none">
+    <div class="day-hdr"><h2>Quinta — Dia C</h2><p>Ombro (posterior + lateral) · Tríceps · Peito superior</p></div>
+    <div class="blk">
+      <div class="blk-title">Ombro</div>
+      <div id="ex-QUI-0" class="ex-row" data-day="QUI" data-idx="0" data-name="Desenvolvimento com Halteres (em pé)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Desenvolvimento com Halteres (em pé)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 8–10</span><span class="focus-tag">OMBRO ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Variação em pé. Mais recrutamento do core e carga global.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=caQuaVo1Lo8" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',0)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-0"><div class="log-inner"><div class="log-last" id="ll-QUI-0">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-0-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-0-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-0-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',0)">Salvar</button></div></div></div></div>
+      <div id="ex-QUI-1" class="ex-row" data-day="QUI" data-idx="1" data-name="Elevação Lateral Halteres 21s"><div class="ex-top"><div class="ex-info"><div class="ex-name">Elevação Lateral Halteres (21s)</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 21</span><span class="focus-tag">LATERAL ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">7 reps inferior + 7 superior + 7 completo.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=jannLx4RxKo" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',1)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-1"><div class="log-inner"><div class="log-last" id="ll-QUI-1">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-1-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-1-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-1-r" placeholder="21" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',1)">Salvar</button></div></div></div></div>
+      <div id="ex-QUI-2" class="ex-row" data-day="QUI" data-idx="2" data-name="Posterior de Ombro com Halter"><div class="ex-top"><div class="ex-info"><div class="ex-name">Posterior de Ombro com Halter</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 12–15</span><span class="focus-tag">POSTERIOR ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Tronco inclinado. Braços levemente fletidos. Define o V.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=xQenFYs_DTw" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',2)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-2"><div class="log-inner"><div class="log-last" id="ll-QUI-2">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-2-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-2-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-2-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',2)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Peito Superior (2ª dose)</div>
+      <div id="ex-QUI-3" class="ex-row" data-day="QUI" data-idx="3" data-name="Supino Inclinado com Halteres"><div class="ex-top"><div class="ex-info"><div class="ex-name">Supino Inclinado com Halteres</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">PEITO SUPERIOR ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Banco 30–45°. Variação para halter — amplitude maior.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=RGeSgQmO1EU" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',3)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-3"><div class="log-inner"><div class="log-last" id="ll-QUI-3">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-3-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-3-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-3-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',3)">Salvar</button></div></div></div></div>
+      <div id="ex-QUI-4" class="ex-row" data-day="QUI" data-idx="4" data-name="Crucifixo Reto com Halteres"><div class="ex-top"><div class="ex-info"><div class="ex-name">Crucifixo Reto com Halteres</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Arco leve. Abra até sentir o estiramento no peitoral.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=fG2fUgin3Zw" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',4)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-4"><div class="log-inner"><div class="log-last" id="ll-QUI-4">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-4-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-4-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-4-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',4)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Tríceps</div>
+      <div id="ex-QUI-5" class="ex-row" data-day="QUI" data-idx="5" data-name="Tríceps Francês com Halter"><div class="ex-top"><div class="ex-info"><div class="ex-name">Tríceps Francês com Halter (sentado)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">TRÍCEPS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Ativa cabeça longa. Cotovelos para dentro.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=VmslGNmLvKw" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',5)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-5"><div class="log-inner"><div class="log-last" id="ll-QUI-5">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-5-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-5-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-5-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',5)">Salvar</button></div></div></div></div>
+      <div id="ex-QUI-6" class="ex-row" data-day="QUI" data-idx="6" data-name="Tríceps Polia Corda (unilateral)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Tríceps Polia com Corda (unilateral)</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Cotovelo fixo ao tronco. Pronação no final.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=KhK5HWJfsrQ" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('QUI',6)">+ Carga</button></div></div><div class="log-panel" id="lp-QUI-6"><div class="log-inner"><div class="log-last" id="ll-QUI-6">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-QUI-6-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-QUI-6-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-QUI-6-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('QUI',6)">Salvar</button></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ─── SEX / DIA D ─── -->
+  <div id="day-sex" style="display:none">
+    <div class="day-hdr"><h2>Sexta — Dia D</h2><p>Costas (volume) · Bíceps · Quadríceps · Core</p></div>
+    <div class="blk">
+      <div class="blk-title">Costas</div>
+      <div id="ex-SEX-0" class="ex-row" data-day="SEX" data-idx="0" data-name="Puxada Supinada (Pulley)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Puxada Supinada (Pulley fechado)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">LATÍSSIMO ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Supinação ativa mais bíceps + lat inferior. Ótimo para V.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=mPmfwbc_svw" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',0)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-0"><div class="log-inner"><div class="log-last" id="ll-SEX-0">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-0-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-0-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-0-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',0)">Salvar</button></div></div></div></div>
+      <div id="ex-SEX-1" class="ex-row" data-day="SEX" data-idx="1" data-name="Remada Sentada Aberta (Máquina)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Remada Sentada Aberta (Máquina)</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">COSTAS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pegada aberta. Ativa trapézio médio e romboides.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=IVUC76X7iOI" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',1)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-1"><div class="log-inner"><div class="log-last" id="ll-SEX-1">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-1-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-1-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-1-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',1)">Salvar</button></div></div></div></div>
+      <div id="ex-SEX-2" class="ex-row" data-day="SEX" data-idx="2" data-name="Remada Baixa no Cabo (triângulo)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Remada Baixa no Cabo (triângulo)</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 10–12</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pegada neutra. Puxe para o umbigo. Lat inferior.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=8N17XZVngdc" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',2)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-2"><div class="log-inner"><div class="log-last" id="ll-SEX-2">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-2-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-2-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-2-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',2)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Bíceps</div>
+      <div id="ex-SEX-3" class="ex-row" data-day="SEX" data-idx="3" data-name="Rosca Scott Unilateral com Halter"><div class="ex-top"><div class="ex-info"><div class="ex-name">Rosca Scott Unilateral com Halter</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">BÍCEPS ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Elimina compensação. Pico de contração máximo.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=ZyisfW7q3qs" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',3)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-3"><div class="log-inner"><div class="log-last" id="ll-SEX-3">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-3-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-3-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-3-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',3)">Salvar</button></div></div></div></div>
+      <div id="ex-SEX-4" class="ex-row" data-day="SEX" data-idx="4" data-name="Rosca Direta com Halteres (alternada)"><div class="ex-top"><div class="ex-info"><div class="ex-name">Rosca Direta com Halteres (alternada)</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Supinação no final. Cotovelos fixos.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=wThiFR_bPYU" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',4)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-4"><div class="log-inner"><div class="log-last" id="ll-SEX-4">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-4-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-4-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-4-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',4)">Salvar</button></div></div></div></div>
+    </div>
+    <div class="blk">
+      <div class="blk-title">Quadríceps</div>
+      <div id="ex-SEX-5" class="ex-row" data-day="SEX" data-idx="5" data-name="Agachamento Livre com Barra"><div class="ex-top"><div class="ex-info"><div class="ex-name">Agachamento Livre com Barra</div><div class="ex-meta"><span class="ex-sets-lbl">4 × 10–12</span><span class="focus-tag">QUAD ⭐</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pés na largura dos ombros. Não curve a lombar.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=rM6SDUdl9fs" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',5)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-5"><div class="log-inner"><div class="log-last" id="ll-SEX-5">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-5-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-5-s" placeholder="4" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-5-r" placeholder="10" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',5)">Salvar</button></div></div></div></div>
+      <div id="ex-SEX-6" class="ex-row" data-day="SEX" data-idx="6" data-name="Cadeira Extensora"><div class="ex-top"><div class="ex-info"><div class="ex-name">Cadeira Extensora</div><div class="ex-meta"><span class="ex-sets-lbl">3 × 12–15</span></div><div style="font-size:11px;color:var(--dim);margin-top:3px;">Pause 1s no topo. Finalizador de quadríceps.</div></div><div class="ex-actions"><a class="yt-btn" href="https://www.youtube.com/watch?v=LhG0Xi6zWNY" target="_blank">▶</a><button class="log-btn" onclick="toggleLog('SEX',6)">+ Carga</button></div></div><div class="log-panel" id="lp-SEX-6"><div class="log-inner"><div class="log-last" id="ll-SEX-6">Nenhum registro ainda.</div><div class="log-inputs"><div class="log-field"><label>Carga (kg)</label><input type="number" id="li-SEX-6-w" placeholder="0" min="0" step="0.5"></div><div class="log-field"><label>Séries</label><input type="number" id="li-SEX-6-s" placeholder="3" min="1" max="10"></div><div class="log-field"><label>Reps</label><input type="number" id="li-SEX-6-r" placeholder="12" min="1" max="50"></div><button class="save-btn" onclick="saveLog('SEX',6)">Salvar</button></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ─── SÁB ─── -->
+  <div id="day-sab" style="display:none">
+    <div class="day-hdr"><h2>Sábado — Flexível</h2><p>Reposição ou descanso</p></div>
+    <div class="rest-card"><div class="icon">🔄</div><h3>Dia de Reposição</h3><p><strong>Foi todos os 4 dias?</strong> Descanse ou caminhada leve 30 min.<br><br><strong>Faltou 1 dia?</strong> Repõe o treino perdido.<br><br><strong>Faltou 2 dias?</strong> Priorize Dia A ou B.</p></div>
+  </div>
+
+  <!-- ─── DOM ─── -->
+  <div id="day-dom" style="display:none">
+    <div class="day-hdr"><h2>Domingo — Corrida</h2><p>Cardio aeróbico de base</p></div>
+    <div class="rest-card green"><div class="icon">🏃</div><h3>Corrida 5km</h3><p>Ritmo confortável e conversacional. Objetivo: aeróbico de base.<br><br>Se o sábado foi treino pesado, baixe o ritmo. Recuperação vale mais que o cronômetro.</p></div>
+  </div>
+
+</div><!-- /screen-main -->
+
+<!-- HISTÓRICO -->
+<div class="screen" id="screen-hist">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <h2 style="font-size:16px;font-weight:700;">Histórico de Treinos</h2>
+    <button onclick="clearAllSessions()" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;">Limpar tudo</button>
+  </div>
+  <div id="hist-list"></div>
+</div>
+
+<!-- EVOLUÇÃO -->
+<div class="screen" id="screen-evo">
+  <h2 style="font-size:16px;font-weight:700;margin-bottom:14px;">Evolução por Exercício</h2>
+  <div class="evo-select-wrap">
+    <select id="evo-select" onchange="renderEvo()"><option value="">— Selecione um exercício —</option></select>
+  </div>
+  <div id="pr-area"></div>
+  <div class="chart-wrap">
+    <h4>Carga (kg) ao longo do tempo</h4>
+    <div id="chart-area"><div class="chart-empty">Selecione um exercício para ver o gráfico.</div></div>
+  </div>
+  <div class="chart-wrap">
+    <h4>Volume total (kg × reps) por sessão</h4>
+    <div id="vol-area"><div class="chart-empty">Selecione um exercício para ver o gráfico.</div></div>
+  </div>
+</div>
+
+<!-- FINISH BAR -->
+<div class="finish-bar" id="finishBar">
+  <button class="finish-btn" onclick="finishSession()">✓ Concluir Treino e Salvar Sessão</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// STORAGE (localStorage — persiste no browser)
+// ════════════════════════════════════════
+const LS_LOGS     = 'vs_logs_v2';
+const LS_SESSIONS = 'vs_sessions_v2';
+
+function getLogs(){ try{ return JSON.parse(localStorage.getItem(LS_LOGS)||'{}'); }catch(e){return{};} }
+function saveLogs(d){ localStorage.setItem(LS_LOGS, JSON.stringify(d)); }
+function getSessions(){ try{ return JSON.parse(localStorage.getItem(LS_SESSIONS)||'[]'); }catch(e){return[];} }
+function saveSessions(d){ localStorage.setItem(LS_SESSIONS, JSON.stringify(d)); }
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const DAYS_TRAIN = ['SEG','TER','QUI','SEX'];
+const dayMap = {seg:'SEG',ter:'TER',qua:'QUA',qui:'QUI',sex:'SEX',sab:'SAB',dom:'DOM'};
+const dayLabels = {SEG:'Dia A — Segunda',TER:'Dia B — Terça',QUI:'Dia C — Quinta',SEX:'Dia D — Sexta'};
+let currentDay = 'seg';
+let sessionLogs = {}; // exercícios registrados na sessão atual
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showMain(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-main').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  document.getElementById('weekStrip').style.display='grid';
+}
+function showHist(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-hist').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  document.getElementById('weekStrip').style.display='none';
+  renderHist();
+}
+function showEvo(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-evo').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[2].classList.add('active');
+  document.getElementById('weekStrip').style.display='none';
+  buildEvoSelect();
+  renderEvo();
+}
+
+function showDay(d){
+  ['seg','ter','qua','qui','sex','sab','dom'].forEach(x=>{
+    document.getElementById('day-'+x).style.display='none';
+    document.getElementById('tab-'+x).classList.remove('active');
+  });
+  document.getElementById('day-'+d).style.display='block';
+  document.getElementById('tab-'+d).classList.add('active');
+  currentDay = d;
+  updateFinishBar();
+  window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════
+// LOG PANEL TOGGLE
+// ════════════════════════════════════════
+function toggleLog(day, idx){
+  const pid = `lp-${day}-${idx}`;
+  const panel = document.getElementById(pid);
+  const isOpen = panel.classList.contains('open');
+  // close all
+  document.querySelectorAll('.log-panel.open').forEach(p=>p.classList.remove('open'));
+  if(!isOpen){
+    panel.classList.add('open');
+    loadLastLog(day, idx);
+  }
+}
+
+function loadLastLog(day, idx){
+  const logs = getLogs();
+  const key = `${day}-${idx}`;
+  const ll = document.getElementById(`ll-${day}-${idx}`);
+  if(logs[key] && logs[key].length > 0){
+    const last = logs[key][logs[key].length-1];
+    ll.innerHTML = `Último: <strong>${last.w}kg × ${last.s}×${last.r}</strong> <span style="color:var(--dim)">(${last.date})</span>`;
+    document.getElementById(`li-${day}-${idx}-w`).value = last.w;
+    document.getElementById(`li-${day}-${idx}-s`).value = last.s;
+    document.getElementById(`li-${day}-${idx}-r`).value = last.r;
+  } else {
+    ll.innerHTML = 'Nenhum registro ainda.';
+  }
+}
+
+// ════════════════════════════════════════
+// SAVE LOG
+// ════════════════════════════════════════
+function saveLog(day, idx){
+  const w = parseFloat(document.getElementById(`li-${day}-${idx}-w`).value)||0;
+  const s = parseInt(document.getElementById(`li-${day}-${idx}-s`).value)||1;
+  const r = parseInt(document.getElementById(`li-${day}-${idx}-r`).value)||1;
+  const now = new Date();
+  const date = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const entry = {w,s,r,date,ts:now.getTime()};
+
+  const logs = getLogs();
+  const key = `${day}-${idx}`;
+  if(!logs[key]) logs[key]=[];
+  logs[key].push(entry);
+  saveLogs(logs);
+
+  // mark in session
+  const sk = `${day}-${idx}`;
+  const exEl = document.getElementById(`ex-${day}-${idx}`);
+  const exName = exEl ? exEl.dataset.name : sk;
+  if(!sessionLogs[day]) sessionLogs[day]={};
+  sessionLogs[day][idx]={w,s,r,name:exName};
+
+  // update button
+  const btn = document.querySelector(`#ex-${day}-${idx} .log-btn`);
+  if(btn){btn.classList.add('has-log');btn.textContent='✓ '+w+'kg';}
+
+  // update last
+  const ll = document.getElementById(`ll-${day}-${idx}`);
+  ll.innerHTML = `Último: <strong>${w}kg × ${s}×${r}</strong> <span style="color:var(--dim)">(${date})</span>`;
+
+  // close panel
+  document.getElementById(`lp-${day}-${idx}`).classList.remove('open');
+  updateFinishBar();
+  toast('Salvo — ' + w + 'kg × ' + s + '×' + r);
+}
+
+// ════════════════════════════════════════
+// FINISH SESSION
+// ════════════════════════════════════════
+function updateFinishBar(){
+  const dKey = dayMap[currentDay];
+  const bar = document.getElementById('finishBar');
+  if(DAYS_TRAIN.includes(dKey) && sessionLogs[dKey] && Object.keys(sessionLogs[dKey]).length>0){
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function finishSession(){
+  const dKey = dayMap[currentDay];
+  if(!sessionLogs[dKey]) return;
+  const sessions = getSessions();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  sessions.unshift({
+    id: now.getTime(),
+    day: dKey,
+    label: dayLabels[dKey]||dKey,
+    date: dateStr,
+    exercises: {...sessionLogs[dKey]}
+  });
+  saveSessions(sessions);
+  delete sessionLogs[dKey];
+
+  // mark day pip done
+  const stripId = {SEG:'seg',TER:'ter',QUI:'qui',SEX:'sex'}[dKey];
+  if(stripId) document.getElementById('tab-'+stripId).classList.add('done');
+
+  document.getElementById('finishBar').classList.remove('show');
+  toast('Sessão salva!');
+}
+
+// ════════════════════════════════════════
+// HISTÓRICO
+// ════════════════════════════════════════
+function renderHist(){
+  const sessions = getSessions();
+  const el = document.getElementById('hist-list');
+  if(!sessions.length){
+    el.innerHTML='<div class="hist-empty">Nenhum treino registrado ainda.<br>Registre cargas e clique em "Concluir Treino".</div>';
+    return;
+  }
+  el.innerHTML = sessions.map((s,i)=>{
+    const exList = Object.values(s.exercises).map(e=>
+      `<div class="sess-ex"><span class="sess-ex-name">${e.name}</span><span class="sess-ex-val">${e.w}kg × ${e.s}×${e.r}</span></div>`
+    ).join('');
+    const vol = Object.values(s.exercises).reduce((acc,e)=>acc+(e.w*e.s*e.r),0);
+    return `<div class="sess-card">
+      <div class="sess-hdr" onclick="toggleSess(${i})">
+        <div>
+          <div class="sess-title">${s.label}</div>
+          <div class="sess-date">${s.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sess-badge">Vol ${vol.toLocaleString('pt-BR')}kg</span>
+          <button class="del-sess" onclick="event.stopPropagation();delSession(${s.id})">Excluir</button>
+        </div>
+      </div>
+      <div class="sess-body" id="sb-${i}">${exList}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSess(i){
+  const b = document.getElementById('sb-'+i);
+  b.classList.toggle('open');
+}
+function delSession(id){
+  let s = getSessions().filter(x=>x.id!==id);
+  saveSessions(s);
+  renderHist();
+}
+function clearAllSessions(){
+  if(confirm('Apagar todo o histórico?')){saveSessions([]);renderHist();}
+}
+
+// ════════════════════════════════════════
+// EVOLUÇÃO
+// ════════════════════════════════════════
+function buildEvoSelect(){
+  const logs = getLogs();
+  const sel = document.getElementById('evo-select');
+  const keys = Object.keys(logs).filter(k=>logs[k].length>0);
+  // build name map from sessions
+  const sessions = getSessions();
+  const nameMap = {};
+  sessions.forEach(s=>{
+    Object.entries(s.exercises).forEach(([idx,ex])=>{
+      nameMap[`${s.day}-${idx}`] = ex.name;
+    });
+  });
+  // also from DOM
+  document.querySelectorAll('.ex-row').forEach(el=>{
+    const k = `${el.dataset.day}-${el.dataset.idx}`;
+    if(!nameMap[k]) nameMap[k]=el.dataset.name;
+  });
+  sel.innerHTML = '<option value="">— Selecione um exercício —</option>' +
+    keys.map(k=>`<option value="${k}">${nameMap[k]||k}</option>`).join('');
+}
+
+function renderEvo(){
+  const key = document.getElementById('evo-select').value;
+  const prArea = document.getElementById('pr-area');
+  const chartArea = document.getElementById('chart-area');
+  const volArea = document.getElementById('vol-area');
+  if(!key){
+    prArea.innerHTML='';
+    chartArea.innerHTML='<div class="chart-empty">Selecione um exercício para ver o gráfico.</div>';
+    volArea.innerHTML='<div class="chart-empty">Selecione um exercício para ver o gráfico.</div>';
+    return;
+  }
+  const logs = getLogs();
+  const data = (logs[key]||[]).slice(-20); // últimas 20 entradas
+  if(!data.length){
+    prArea.innerHTML='';
+    chartArea.innerHTML='<div class="chart-empty">Sem dados ainda.</div>';
+    volArea.innerHTML='<div class="chart-empty">Sem dados ainda.</div>';
+    return;
+  }
+
+  // PR cards
+  const maxW = Math.max(...data.map(d=>d.w));
+  const maxVol = Math.max(...data.map(d=>d.w*d.s*d.r));
+  const prWDate = data.find(d=>d.w===maxW);
+  const prVDate = data.find(d=>d.w*d.s*d.r===maxVol);
+  prArea.innerHTML=`<div class="pr-grid">
+    <div class="pr-card"><div class="pr-label">Carga máxima (PR)</div><div class="pr-val">${maxW} kg</div><div class="pr-date">${prWDate?prWDate.date:''}</div></div>
+    <div class="pr-card"><div class="pr-label">Volume máximo</div><div class="pr-val">${maxVol.toLocaleString('pt-BR')}<span style="font-size:12px;color:var(--muted)"> kg</span></div><div class="pr-date">${prVDate?prVDate.date:''}</div></div>
+  </div>`;
+
+  // Weight chart
+  chartArea.innerHTML='<canvas id="chart-w" height="160"></canvas>';
+  drawBarChart('chart-w', data.map(d=>d.date), data.map(d=>d.w), '#c9a84c');
+
+  // Volume chart
+  volArea.innerHTML='<canvas id="chart-v" height="160"></canvas>';
+  drawBarChart('chart-v', data.map(d=>d.date), data.map(d=>d.w*d.s*d.r), '#5ebd7a');
+}
+
+function drawBarChart(canvasId, labels, values, color){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 160;
+  canvas.style.width = W+'px';
+  canvas.style.height = H+'px';
+  canvas.width = W*dpr;
+  canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const pad = {t:10,r:10,b:36,l:44};
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+  const max = Math.max(...values,1);
+  const n = values.length;
+  const barW = Math.max(4, Math.min(28, cW/n - 4));
+  const gap = (cW - barW*n)/(n+1);
+
+  ctx.fillStyle='#171717';
+  ctx.fillRect(0,0,W,H);
+
+  // grid lines
+  for(let i=0;i<=4;i++){
+    const y = pad.t + cH*(1-i/4);
+    ctx.strokeStyle='#222';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    ctx.fillStyle='#555';ctx.font=`10px Inter`;ctx.textAlign='right';
+    ctx.fillText(Math.round(max*i/4), pad.l-4, y+4);
+  }
+
+  // bars
+  values.forEach((v,i)=>{
+    const x = pad.l + gap + i*(barW+gap);
+    const bH = (v/max)*cH;
+    const y = pad.t + cH - bH;
+    // bar
+    ctx.fillStyle = color+'33';
+    ctx.fillRect(x,y,barW,bH);
+    // top highlight
+    ctx.fillStyle = color;
+    ctx.fillRect(x,y,barW,3);
+    // value label
+    if(bH>16){
+      ctx.fillStyle='#eee';ctx.font=`bold 9px Inter`;ctx.textAlign='center';
+      ctx.fillText(v,x+barW/2,y+13);
+    }
+    // x label (date)
+    if(n<=12||i%Math.ceil(n/8)===0){
+      ctx.fillStyle='#555';ctx.font=`9px Inter`;ctx.textAlign='center';
+      ctx.fillText(labels[i],x+barW/2,H-6);
+    }
+  });
+
+  // axis
+  ctx.strokeStyle='#333';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+cH);ctx.lineTo(pad.l+cW,pad.t+cH);ctx.stroke();
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function init(){
+  // restore last log buttons
+  const logs = getLogs();
+  Object.keys(logs).forEach(key=>{
+    const entries = logs[key];
+    if(!entries||!entries.length) return;
+    const last = entries[entries.length-1];
+    const btn = document.querySelector(`#ex-${key} .log-btn`);
+    if(btn){btn.classList.add('has-log');btn.textContent='✓ '+last.w+'kg';}
+  });
+  showDay('seg');
+}
+init();
+</script>
+</body>
+</html>
