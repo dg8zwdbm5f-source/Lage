@@ -21,41 +21,59 @@ document.addEventListener("DOMContentLoaded", async () => {
     const categoriasObj = {};
     const centrosObj = {};
 
+    // Lista de meses abreviados para a coluna Vencimento
+    const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
     dados.forEach(item => {
         const totalParcelas = parseInt(item.parcela) || 1;
         const valorParcela = Number(item.valor) || 0;
         
-        // Pega as datas originais da API (enviadas em DD/MM/AAAA pelo Apps Script)
-        let textoDataCompra = item.dataCompra || "";
-        let textoVencimento = item.vencimento || item.dataCompra || "";
+        let dataTexto = item.dataCompra || "";
         
         let diaBase = 1;
         let mesBase = new Date().getMonth();
         let anoBase = new Date().getFullYear();
 
-        // Processa a data base de vencimento para calcular os meses futuros das parcelas
-        if (textoVencimento && textoVencimento.includes("/")) {
-            const partes = textoVencimento.split("/");
-            if (partes.length === 3) {
-                diaBase = parseInt(partes[0]);
-                mesBase = parseInt(partes[1]) - 1; 
-                anoBase = parseInt(partes[2]);
+        // Faz a leitura limpa do formato ISO (AAAA-MM-DD...) enviado pela API
+        if (dataTexto) {
+            if (dataTexto.includes("T")) {
+                dataTexto = dataTexto.split("T")[0]; // Pega apenas a parte da data antes do "T"
+            }
+            
+            if (dataTexto.includes("-")) {
+                const partes = dataTexto.split("-");
+                if (partes.length === 3) {
+                    anoBase = parseInt(partes[0]);
+                    mesBase = parseInt(partes[1]) - 1; // Meses no JS começam em 0
+                    diaBase = parseInt(partes[2]);
+                }
+            } else if (dataTexto.includes("/")) {
+                const partes = dataTexto.split("/");
+                if (partes.length === 3) {
+                    diaBase = parseInt(partes[0]);
+                    mesBase = parseInt(partes[1]) - 1;
+                    anoBase = parseInt(partes[2]);
+                }
             }
         }
 
-        // Loop para projetar as parcelas futuras
+        // Força a formatação da Data Compra estritamente como DD/MM/AAAA
+        const diaC = String(diaBase).padStart(2, '0');
+        const mesC = String(mesBase + 1).padStart(2, '0');
+        const dataCompraFormatada = `${diaC}/${mesC}/${anoBase}`;
+
+        // Loop para projetar as parcelas nos meses seguintes
         for (let i = 0; i < totalParcelas; i++) {
-            // Calcula o vencimento subsequente de forma segura
+            // Calcula a data de vencimento da parcela de forma nativa e segura
             let dataParcela = new Date(anoBase, mesBase + i, diaBase);
             
-            const diaVenc = String(dataParcela.getDate()).padStart(2, '0');
-            const mesVenc = String(dataParcela.getMonth() + 1).padStart(2, '0');
+            // Formata o Vencimento no formato padrão solicitado: Mês-AAAA (ex: Jun-2026)
+            const mesVencTexto = mesesAbreviados[dataParcela.getMonth()];
             const anoVenc = dataParcela.getFullYear();
-            const vencimentoFormatado = `${diaVenc}/${mesVenc}/${anoVenc}`;
+            const vencimentoFormatado = `${mesVencTexto}-${anoVenc}`;
 
             totalGasto += valorParcela;
 
-            // Tratamento de Status
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
@@ -80,11 +98,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
-            // Coloca tanto a Data Compra original quanto o Vencimento calculado na tabela
             linhasTabela.push(`
                 <tr>
-                    <td>${textoDataCompra || "-"}</td>
-                    <td>${vencimentoFormatado}</td>
+                    <td>${dataCompraFormatada}</td>
+                    <td><strong>${vencimentoFormatado}</strong></td>
                     <td>${item.fornecedor || "-"}</td>
                     <td>${descricaoCustomizada}</td>
                     <td>R$ ${valorParcela.toFixed(2).replace(".", ",")}</td>
@@ -104,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
-    // Gráfico de Pizza
+    // Desenha Gráfico de Pizza
     try {
         const ctxPizza = document.getElementById('graficoSubcategorias').getContext('2d');
         if (chartPizza) chartPizza.destroy();
@@ -127,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     } catch (err) { console.error(err); }
 
-    // Gráfico de Barras
+    // Desenha Gráfico de Barras
     try {
         const ctxBarras = document.getElementById('graficoCentroCusto').getContext('2d');
         if (chartBarras) chartBarras.destroy();
