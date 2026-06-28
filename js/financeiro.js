@@ -25,35 +25,37 @@ document.addEventListener("DOMContentLoaded", async () => {
         const totalParcelas = parseInt(item.parcela) || 1;
         const valorParcela = Number(item.valor) || 0;
         
-        // Recebe a string direta do Sheets no formato DD/MM/AAAA
-        let dataTexto = item.vencimento || item.dataCompra || "";
+        // Pega as datas originais da API (enviadas em DD/MM/AAAA pelo Apps Script)
+        let textoDataCompra = item.dataCompra || "";
+        let textoVencimento = item.vencimento || item.dataCompra || "";
         
         let diaBase = 1;
         let mesBase = new Date().getMonth();
         let anoBase = new Date().getFullYear();
 
-        if (dataTexto && dataTexto.includes("/")) {
-            const partes = dataTexto.split("/");
+        // Processa a data base de vencimento para calcular os meses futuros das parcelas
+        if (textoVencimento && textoVencimento.includes("/")) {
+            const partes = textoVencimento.split("/");
             if (partes.length === 3) {
                 diaBase = parseInt(partes[0]);
-                mesBase = parseInt(partes[1]) - 1; // Meses no JS começam em 0 (Janeiro = 0)
+                mesBase = parseInt(partes[1]) - 1; 
                 anoBase = parseInt(partes[2]);
             }
         }
 
-        // Loop para multiplicar e projetar as parcelas nos meses seguintes
+        // Loop para projetar as parcelas futuras
         for (let i = 0; i < totalParcelas; i++) {
-            // Calcula o mês futuro de forma nativa e segura
+            // Calcula o vencimento subsequente de forma segura
             let dataParcela = new Date(anoBase, mesBase + i, diaBase);
             
-            // Monta visualmente no formato DD/MM/AAAA solicitado
-            const dia = String(dataParcela.getDate()).padStart(2, '0');
-            const mes = String(dataParcela.getMonth() + 1).padStart(2, '0');
-            const ano = dataParcela.getFullYear();
-            const dataFormatada = `${dia}/${mes}/${ano}`;
+            const diaVenc = String(dataParcela.getDate()).padStart(2, '0');
+            const mesVenc = String(dataParcela.getMonth() + 1).padStart(2, '0');
+            const anoVenc = dataParcela.getFullYear();
+            const vencimentoFormatado = `${diaVenc}/${mesVenc}/${anoVenc}`;
 
             totalGasto += valorParcela;
 
+            // Tratamento de Status
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
@@ -78,9 +80,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
+            // Coloca tanto a Data Compra original quanto o Vencimento calculado na tabela
             linhasTabela.push(`
                 <tr>
-                    <td>${dataFormatada}</td>
+                    <td>${textoDataCompra || "-"}</td>
+                    <td>${vencimentoFormatado}</td>
                     <td>${item.fornecedor || "-"}</td>
                     <td>${descricaoCustomizada}</td>
                     <td>R$ ${valorParcela.toFixed(2).replace(".", ",")}</td>
@@ -100,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
-    // Desenha Gráfico de Pizza
+    // Gráfico de Pizza
     try {
         const ctxPizza = document.getElementById('graficoSubcategorias').getContext('2d');
         if (chartPizza) chartPizza.destroy();
@@ -123,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     } catch (err) { console.error(err); }
 
-    // Desenha Gráfico de Barras
+    // Gráfico de Barras
     try {
         const ctxBarras = document.getElementById('graficoCentroCusto').getContext('2d');
         if (chartBarras) chartBarras.destroy();
