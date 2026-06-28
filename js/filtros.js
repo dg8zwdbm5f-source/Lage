@@ -59,7 +59,6 @@ function inicializarFiltros(dados) {
             contasSet.add(item.conta.trim());
         }
 
-        // Extrai meses e anos baseados nos vencimentos calculados reais
         let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
         let mesVencimentoBase = mesBase; 
         let anoVencimentoBase = anoBase;
@@ -90,7 +89,7 @@ function inicializarFiltros(dados) {
         }
     });
 
-    // 1. ORDENAR E POPULAR MESES
+    // 1. POPULAR DROPDOWN DE MESES
     const mesesOrdenados = Array.from(mesesSet).sort((a, b) => {
         return mesesReferencia.indexOf(a) - mesesReferencia.indexOf(b);
     });
@@ -101,7 +100,7 @@ function inicializarFiltros(dados) {
         selectMes.appendChild(opcao);
     });
 
-    // 2. ORDENAR E POPULAR ANOS
+    // 2. POPULAR DROPDOWN DE ANOS
     const anosOrdenados = Array.from(anosSet).sort((a, b) => a - b);
     anosOrdenados.forEach(ano => {
         const opcao = document.createElement("option");
@@ -110,7 +109,7 @@ function inicializarFiltros(dados) {
         selectAno.appendChild(opcao);
     });
 
-    // 3. ORDENAR E POPULAR CONTAS
+    // 3. POPULAR DROPDOWN DE CONTAS
     Array.from(contasSet).sort().forEach(conta => {
         const opcao = document.createElement("option");
         opcao.value = conta;
@@ -118,9 +117,8 @@ function inicializarFiltros(dados) {
         selectConta.appendChild(opcao);
     });
 
-    // --- ESCUTADORES DE EVENTO DE MUDANÇA (LISTENERS) ---
+    // --- ESCUTADORES DE EVENTO (LISTENERS) ---
     
-    // Filtro por texto digitado (busca em tempo real)
     inputTexto.addEventListener("input", (e) => {
         filtroTextoAtual = e.target.value.toLowerCase().trim();
         dispararRedesenhoPainel();
@@ -146,35 +144,32 @@ function inicializarFiltros(dados) {
         dispararRedesenhoPainel();
     });
 
-    // Evento do Botão Limpar Filtros
     if (btnLimpar) {
         btnLimpar.addEventListener("click", () => {
-            // Reseta variáveis globais
             filtroTextoAtual = "";
             filtroMesAtual = "todos";
             filtroAnoAtual = "todos";
             filtroContaAtual = "todos";
             filtroStatusAtual = "todos";
 
-            // Reseta elementos visuais na tela
             inputTexto.value = "";
             selectMes.value = "todos";
             selectAno.value = "todos";
             selectConta.value = "todos";
             selectStatus.value = "todos";
 
-            // Atualiza a tela com tudo limpo
             dispararRedesenhoPainel();
         });
     }
 }
 
 /**
- * Validador individual executado linha por linha pelo loop principal do painel.
+ * Validador executado linha por linha.
  */
 function filtrarLinhaIndividual(mesLinha, anoLinha, contaLinha, statusLinha, indiceParcela, itemOriginal) {
-    // 1. Validação do Filtro de Texto (Procura no Fornecedor ou Descrição)
+    // 1. CORREÇÃO DA VALIDAÇÃO DO FILTRO DE TEXTO
     if (filtroTextoAtual !== "") {
+        // Acessa de forma segura os dados originais passados pelo loop principal
         const fornecedor = itemOriginal && itemOriginal.fornecedor ? itemOriginal.fornecedor.toString().toLowerCase() : "";
         const descricao = itemOriginal && itemOriginal.descricao ? itemOriginal.descricao.toString().toLowerCase() : "";
         
@@ -183,22 +178,22 @@ function filtrarLinhaIndividual(mesLinha, anoLinha, contaLinha, statusLinha, ind
         }
     }
 
-    // 2. Validação do Filtro de Mês
+    // 2. Filtro de Mês
     if (filtroMesAtual !== "todos" && mesLinha !== filtroMesAtual) {
         return false;
     }
 
-    // 3. Validação do Filtro de Ano
+    // 3. Filtro de Ano
     if (filtroAnoAtual !== "todos" && anoLinha.toString() !== filtroAnoAtual) {
         return false;
     }
 
-    // 4. Validação do Filtro de Conta / Cartão
+    // 4. Filtro de Conta
     if (filtroContaAtual !== "todos" && (contaLinha || "").trim() !== filtroContaAtual) {
         return false;
     }
 
-    // 5. Validação do Filtro de Status
+    // 5. Filtro de Status
     let statusRealParcela = (statusLinha || "").trim().toLowerCase();
     if (indiceParcela > 0) {
         statusRealParcela = "pendente";
