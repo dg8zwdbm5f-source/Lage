@@ -96,9 +96,10 @@
             border: 1px solid var(--border-color);
             margin-bottom: 32px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            align-items: flex-end;
         }
 
         .secao-filtros div {
@@ -115,7 +116,7 @@
             letter-spacing: 0.05em;
         }
 
-        .secao-filtros select {
+        .secao-filtros select, .secao-filtros input {
             width: 100%;
             background-color: var(--bg-input);
             color: var(--text-main);
@@ -126,16 +127,39 @@
             font-weight: 500;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            -webkit-appearance: none; /* Remove seta padrão em alguns browsers se necessário */
         }
 
-        .secao-filtros select:focus {
+        .secao-filtros select { cursor: pointer; }
+
+        .secao-filtros select:focus, .secao-filtros input:focus {
             border-color: var(--cor-lancamentos);
             box-shadow: 0 0 0 2px rgba(153, 109, 255, 0.2);
         }
 
-        /* --- Cartões de Resumo (Estilo Minimalista/SaaS) --- */
+        /* Botão de Limpar Filtros */
+        .btn-limpar {
+            background-color: transparent;
+            color: var(--text-support);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-limpar:hover {
+            background-color: rgba(247, 90, 104, 0.1);
+            color: var(--cor-pendente);
+            border-color: var(--cor-pendente);
+        }
+
+        /* --- Cartões de Resumo --- */
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -159,7 +183,6 @@
             border-color: var(--text-muted);
         }
 
-        /* Barras laterais discretas de indicação de cor */
         .card::before {
             content: '';
             position: absolute;
@@ -198,9 +221,7 @@
         }
 
         @media (max-width: 500px) {
-            .container-graficos {
-                grid-template-columns: 1fr;
-            }
+            .container-graficos { grid-template-columns: 1fr; }
         }
 
         .bloco-grafico {
@@ -264,15 +285,9 @@
             font-weight: 400;
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #16161a; }
 
-        tr:hover td {
-            background-color: #16161a;
-        }
-
-        /* --- Badges de Status Refinadas --- */
         .status-badge {
             padding: 6px 12px;
             border-radius: 6px;
@@ -285,15 +300,8 @@
             justify-content: center;
         }
 
-        .status-badge.pago {
-            background-color: rgba(0, 179, 126, 0.1);
-            color: #04d361;
-        }
-
-        .status-badge.pendente {
-            background-color: rgba(247, 90, 104, 0.1);
-            color: #f75a68;
-        }
+        .status-badge.pago { background-color: rgba(0, 179, 126, 0.1); color: #04d361; }
+        .status-badge.pendente { background-color: rgba(247, 90, 104, 0.1); color: #f75a68; }
     </style>
 </head>
 <body>
@@ -308,6 +316,10 @@
         <div id="status-conexao">Buscando atualizações da planilha...</div>
 
         <section class="secao-filtros">
+            <div>
+                <label>🔍 Buscar termo</label>
+                <input type="text" id="filtroTexto" placeholder="Fornecedor, item...">
+            </div>
             <div>
                 <label>📅 Mês Vencimento</label>
                 <select id="filtroMes">
@@ -334,6 +346,7 @@
                     <option value="pendente">Pendente</option>
                 </select>
             </div>
+            <button class="btn-limpar" id="btnLimparFiltros">Limpar Filtros</button>
         </section>
 
         <section class="cards">
@@ -388,8 +401,8 @@
         </section>
     </main>
 
-    <script src="js/api.js?v=3.0"></script>
-    <script src="js/filtros.js?v=3.0"></script>
-    <script src="js/financeiro.js?v=3.0"></script>
+    <script src="js/api.js?v=4.0"></script>
+    <script src="js/filtros.js?v=4.0"></script>
+    <script src="js/financeiro.js?v=4.0"></script>
 </body>
 </html>
