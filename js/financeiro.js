@@ -25,50 +25,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         const totalParcelas = parseInt(item.parcela) || 1;
         const valorParcela = Number(item.valor) || 0;
         
+        // Recebe a string direta do Sheets no formato DD/MM/AAAA
         let dataTexto = item.vencimento || item.dataCompra || "";
-        let anoBase = new Date().getFullYear();
-        let mesBase = new Date().getMonth();
+        
         let diaBase = 1;
+        let mesBase = new Date().getMonth();
+        let anoBase = new Date().getFullYear();
 
-        if (dataTexto) {
-            if (dataTexto.includes("-")) {
-                const partesISO = dataTexto.split("T")[0].split("-");
-                if (partesISO.length === 3) {
-                    anoBase = parseInt(partesISO[0]);
-                    mesBase = parseInt(partesISO[1]) - 1;
-                    diaBase = parseInt(partesISO[2]);
-                }
-            } else {
-                let textoLimpo = dataTexto.replace(/ de /g, " ").replace(/\./g, "").trim();
-                const partes = textoLimpo.split(" ");
-
-                if (partes.length >= 3) {
-                    diaBase = parseInt(partes[0]) || 1;
-                    anoBase = parseInt(partes[partes.length - 1]) || new Date().getFullYear();
-                    
-                    const mesesPT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-                    const mesIdentificado = partes[1].toLowerCase().substring(0, 3);
-                    const indexMes = mesesPT.indexOf(mesIdentificado);
-                    
-                    if (indexMes !== -1) {
-                        mesBase = indexMes;
-                    } else if (!isNaN(partes[1])) {
-                        mesBase = parseInt(partes[1]) - 1;
-                    }
-                } else if (dataTexto.includes("/")) {
-                    const partesBarra = dataTexto.split("/");
-                    if (partesBarra.length === 3) {
-                        diaBase = parseInt(partesBarra[0]);
-                        mesBase = parseInt(partesBarra[1]) - 1;
-                        anoBase = parseInt(partesBarra[2]);
-                    }
-                }
+        if (dataTexto && dataTexto.includes("/")) {
+            const partes = dataTexto.split("/");
+            if (partes.length === 3) {
+                diaBase = parseInt(partes[0]);
+                mesBase = parseInt(partes[1]) - 1; // Meses no JS começam em 0 (Janeiro = 0)
+                anoBase = parseInt(partes[2]);
             }
         }
 
+        // Loop para multiplicar e projetar as parcelas nos meses seguintes
         for (let i = 0; i < totalParcelas; i++) {
+            // Calcula o mês futuro de forma nativa e segura
             let dataParcela = new Date(anoBase, mesBase + i, diaBase);
-            const dataFormatada = dataParcela.toLocaleDateString("pt-BR");
+            
+            // Monta visualmente no formato DD/MM/AAAA solicitado
+            const dia = String(dataParcela.getDate()).padStart(2, '0');
+            const mes = String(dataParcela.getMonth() + 1).padStart(2, '0');
+            const ano = dataParcela.getFullYear();
+            const dataFormatada = `${dia}/${mes}/${ano}`;
 
             totalGasto += valorParcela;
 
@@ -90,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 ? `${item.descricao || "Sem descrição"} (${i + 1}/${totalParcelas})`
                 : (item.descricao || "-");
 
-            // Garante que nomes vazios não quebrem o agrupamento dos gráficos
             const subcategoria = item.subcategoria && item.subcategoria.trim() !== "" ? item.subcategoria.trim() : "Outros";
             const centroCusto = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
             
@@ -119,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
-    // --- Tenta desenhar o Gráfico de Pizza ---
+    // Desenha Gráfico de Pizza
     try {
         const ctxPizza = document.getElementById('graficoSubcategorias').getContext('2d');
         if (chartPizza) chartPizza.destroy();
@@ -140,11 +121,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 plugins: { legend: { position: 'right', labels: { color: '#c4c4cc' } } }
             }
         });
-    } catch (err) {
-        console.error("Erro no Gráfico de Pizza:", err);
-    }
+    } catch (err) { console.error(err); }
 
-    // --- Tenta desenhar o Gráfico de Barras ---
+    // Desenha Gráfico de Barras
     try {
         const ctxBarras = document.getElementById('graficoCentroCusto').getContext('2d');
         if (chartBarras) chartBarras.destroy();
@@ -168,7 +147,5 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         });
-    } catch (err) {
-        console.error("Erro no Gráfico de Barras:", err);
-    }
+    } catch (err) { console.error(err); }
 });
