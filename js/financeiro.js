@@ -38,7 +38,7 @@ function processarPainel(dadosParaExibir) {
     let totalPago = 0;
     let totalPendente = 0;
     
-    const linhasTabela = [];
+    const parcelasProcessadas = [];
     const categoriasObj = {};
     const centrosObj = {};
     const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -56,7 +56,6 @@ function processarPainel(dadosParaExibir) {
 
         // --- TRATAMENTO ROBUSTO DE DATA (ISO OU PT-BR) ---
         if (dataTexto) {
-            // Se vier no formato ISO completo (ex: 2026-05-29T03:00:00.000Z), limpa a hora
             if (dataTexto.includes("T")) {
                 dataTexto = dataTexto.split("T")[0];
             }
@@ -65,7 +64,7 @@ function processarPainel(dadosParaExibir) {
                 const partes = dataTexto.split("-");
                 if (partes.length === 3) {
                     anoBase = parseInt(partes[0]);
-                    mesBase = parseInt(partes[1]) - 1; // Meses no JS vão de 0 a 11
+                    mesBase = parseInt(partes[1]) - 1; 
                     diaBase = parseInt(partes[2]);
                 }
             } else if (dataTexto.includes("/")) {
@@ -78,11 +77,13 @@ function processarPainel(dadosParaExibir) {
             }
         }
 
-        // Reconstrói a Data de Compra no padrão visual DD/MM/AAAA limpo
+        // Cria um objeto Date puro da compra para usarmos na ordenação lógica posterior
+        const objetoDataCompra = new Date(anoBase, mesBase, diaBase);
+
+        // Reconstrói a Data de Compra no padrão visual brasileiro limpo
         const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}/${anoBase}`;
 
-        // --- AJUSTE DE VENCIMENTO DO GOOGLE SHEETS ---
-        // Lendo o campo vencimento enviado pela planilha para alinhar o primeiro mês
+        // --- TRATAMENTO DE VENCIMENTO ---
         let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
         let mesVencimentoBase = mesBase; 
         let anoVencimentoBase = anoBase;
@@ -99,25 +100,23 @@ function processarPainel(dadosParaExibir) {
             } else if (vencimentoTexto.includes("/")) {
                 const partesV = vencimentoTexto.split("/");
                 if (partesV.length === 3) {
-                    // Trata se for DD/MM/AAAA ou MM/AAAA
                     mesVencimentoBase = parseInt(partesV[1]) - 1;
                     anoVencimentoBase = parseInt(partesV[2]);
                 }
             }
         } else {
-            // Se não houver coluna de vencimento preenchida, assume o mês seguinte ao da compra
             mesVencimentoBase = mesBase + 1;
         }
 
-        // Loop gerador de parcelas baseado na data real de vencimento da planilha
+        // Loop gerador de parcelas
         for (let i = 0; i < totalParcelas; i++) {
-            // Cria a data da parcela respeitando o mês e ano corretos de vencimento informados
             let dataParcela = new Date(anoVencimentoBase, mesVencimentoBase + i, 1);
             
             const mesNome = mesesAbreviados[dataParcela.getMonth()];
             const anoNum = dataParcela.getFullYear();
             const vencimentoFormatado = `${mesNome}-${anoNum}`;
 
+            // Executa os filtros ativos (comboboxes e campo de texto)
             if (typeof filtrarLinhaIndividual === "function") {
                 if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i, item)) {
                     continue;
@@ -150,19 +149,36 @@ function processarPainel(dadosParaExibir) {
             categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
-            linhasTabela.push(`
-                <tr>
-                    <td>${dataCompraFormatada}</td>
-                    <td><strong>${vencimentoFormatado}</strong></td>
-                    <td>${item.fornecedor || "-"}</td>
-                    <td>${descricaoCustomizada}</td>
-                    <td>R$ ${valorParcela.toFixed(2).replace(".", ",")}</td>
-                    <td>${item.conta || "-"}</td>
-                    <td><span class="status-badge ${statusParcela}">${statusBadgeTexto}</span></td>
-                </tr>
-            `);
+            // Em vez de criar o HTML direto, salvamos os dados estruturados em um array temporário
+            parcelasProcessadas.push({
+                dataOrdenacao: objetoDataCompra,
+                dataCompraStr: dataCompraFormatada,
+                vencimentoStr: vencimentoFormatado,
+                fornecedor: item.fornecedor || "-",
+                descricao: descricaoCustomizada,
+                valor: valorParcela,
+                conta: item.conta || "-",
+                statusClasse: statusParcela,
+                statusTexto: statusBadgeTexto
+            });
         }
     });
+
+    // --- ALGORITMO DE ORDENAÇÃO DECRESCENTE (Mais recente primeiro) ---
+    parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
+
+    // Agora sim, monta as linhas do HTML já na ordem perfeita
+    const linhasTabela = parcelasProcessadas.map(p => `
+        <tr>
+            <td>${p.dataCompraStr}</td>
+            <td><strong>${p.vencimentoStr}</strong></td>
+            <td>${p.fornecedor}</td>
+            <td>${p.descricao}</td>
+            <td>R$ ${p.valor.toFixed(2).replace(".", ",")}</td>
+            <td>${p.conta}</td>
+            <td><span class="status-badge ${p.statusClasse}">${p.statusTexto}</span></td>
+        </tr>
+    `);
 
     document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
