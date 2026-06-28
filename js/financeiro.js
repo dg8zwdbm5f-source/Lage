@@ -119,7 +119,7 @@ function processarPainel(dadosParaExibir) {
             const vencimentoFormatado = `${mesNome}-${anoNum}`;
 
             if (typeof filtrarLinhaIndividual === "function") {
-                if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i)) {
+                if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i, item)) {
                     continue;
                 }
             }
