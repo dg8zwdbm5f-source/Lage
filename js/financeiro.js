@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const statusDiv = document.getElementById("status-conexao");
     
-    // 1. Busca os dados da API
+    // 1. Puxa os dados brutos da API
     const dados = await carregarDados();
     
     if (!dados || dados.length === 0) {
-        statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Erro ao carregar ou planilha vazia.</span>';
+        statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Erro ao conectar ou dados vazios na planilha.</span>';
         return;
     }
 
@@ -14,11 +14,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     let totalGasto = 0;
     let totalPago = 0;
     let totalPendente = 0;
-    
-    // Usaremos uma array para acumular o HTML da tabela de forma ultra rápida
     const linhasTabela = [];
 
-    // 2. Processar os dados na memória
+    // 2. Processa os dados de forma otimizada
     dados.forEach(item => {
         const valor = Number(item.valor) || 0;
         totalGasto += valor;
@@ -35,7 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             dataFormatada = new Date(dataFormatada).toLocaleDateString("pt-BR");
         }
 
-        // Adiciona a linha na nossa array de memória
         linhasTabela.push(`
             <tr>
                 <td>${dataFormatada || "-"}</td>
@@ -48,12 +45,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         `);
     });
 
-    // 3. Injeta todas as linhas de uma vez só (Ganho massivo de performance)
-    document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
+    // 3. Injeta a tabela inteira de uma única vez (Carregamento instantâneo)
+    document.getElementById("tabelaCorpo").innerHTML = lines = linhasTabela.join("");
 
-    // 4. Atualiza os cartões
+    // 4. Alimenta os cartões de cabeçalho
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("qtdeLancamentos").innerText = dados.length;
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+    // 5. Aciona os gráficos analíticos
+    renderizarGraficos(dados);
 });
