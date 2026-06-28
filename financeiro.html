@@ -58,7 +58,7 @@
             border: 1px solid #29292e;
             margin-bottom: 25px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
         }
 
@@ -225,9 +225,15 @@
 
         <section class="secao-filtros">
             <div>
-                <label>📅 Vencimento</label>
-                <select id="filtroVencimento">
+                <label>📅 Mês Vencimento</label>
+                <select id="filtroMes">
                     <option value="todos">Todos os Meses</option>
+                </select>
+            </div>
+            <div>
+                <label>📆 Ano Vencimento</label>
+                <select id="filtroAno">
+                    <option value="todos">Todos os Anos</option>
                 </select>
             </div>
             <div>
