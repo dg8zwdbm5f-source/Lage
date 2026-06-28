@@ -39,7 +39,7 @@ function processarPainel(dadosParaExibir) {
     let totalPendente = 0;
     
     const parcelasProcessadas = [];
-    const categoriasObj = {};
+    const categoriesObj = {};
     const centrosObj = {};
     const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -49,12 +49,10 @@ function processarPainel(dadosParaExibir) {
         
         let dataTexto = item.dataCompra ? item.dataCompra.toString().trim() : "";
         
-        // Valores padrão caso falhe o parse
         let diaBase = 1;
         let mesBase = new Date().getMonth();
         let anoBase = new Date().getFullYear();
 
-        // --- TRATAMENTO ROBUSTO DE DATA (ISO OU PT-BR) ---
         if (dataTexto) {
             if (dataTexto.includes("T")) {
                 dataTexto = dataTexto.split("T")[0];
@@ -77,13 +75,9 @@ function processarPainel(dadosParaExibir) {
             }
         }
 
-        // Cria um objeto Date puro da compra para usarmos na ordenação lógica posterior
         const objetoDataCompra = new Date(anoBase, mesBase, diaBase);
-
-        // Reconstrói a Data de Compra no padrão visual brasileiro limpo
         const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}/${anoBase}`;
 
-        // --- TRATAMENTO DE VENCIMENTO ---
         let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
         let mesVencimentoBase = mesBase; 
         let anoVencimentoBase = anoBase;
@@ -108,7 +102,6 @@ function processarPainel(dadosParaExibir) {
             mesVencimentoBase = mesBase + 1;
         }
 
-        // Loop gerador de parcelas
         for (let i = 0; i < totalParcelas; i++) {
             let dataParcela = new Date(anoVencimentoBase, mesVencimentoBase + i, 1);
             
@@ -116,7 +109,6 @@ function processarPainel(dadosParaExibir) {
             const anoNum = dataParcela.getFullYear();
             const vencimentoFormatado = `${mesNome}-${anoNum}`;
 
-            // Executa os filtros ativos (comboboxes e campo de texto)
             if (typeof filtrarLinhaIndividual === "function") {
                 if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i, item)) {
                     continue;
@@ -128,12 +120,15 @@ function processarPainel(dadosParaExibir) {
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
+            // Parcelas futuras (i > 0) nascem obrigatoriamente como pendentes
             if (i > 0) {
                 statusParcela = "pendente";
                 statusBadgeTexto = "Pendente";
             }
 
-            if (statusParcela === "pago") {
+            // --- CORREÇÃO DA SOMA LOGÍCA DOS CARDS ---
+            // Aceita "pago" ou "efetuado" vindo do Sheets
+            if (statusParcela === "pago" || statusParcela === "efetuado") {
                 totalPago += valorParcela;
             } else {
                 totalPendente += valorParcela;
@@ -146,10 +141,9 @@ function processarPainel(dadosParaExibir) {
             const subcategoria = item.subcategoria && item.subcategoria.trim() !== "" ? item.subcategoria.trim() : "Outros";
             const centroCusto = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
             
-            categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
+            categoriesObj[subcategoria] = (categoriesObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
-            // Em vez de criar o HTML direto, salvamos os dados estruturados em um array temporário
             parcelasProcessadas.push({
                 dataOrdenacao: objetoDataCompra,
                 dataCompraStr: dataCompraFormatada,
@@ -164,10 +158,8 @@ function processarPainel(dadosParaExibir) {
         }
     });
 
-    // --- ALGORITMO DE ORDENAÇÃO DECRESCENTE (Mais recente primeiro) ---
     parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
 
-    // Agora sim, monta as linhas do HTML já na ordem perfeita
     const linhasTabela = parcelasProcessadas.map(p => `
         <tr>
             <td>${p.dataCompraStr}</td>
@@ -186,7 +178,7 @@ function processarPainel(dadosParaExibir) {
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    atualizarGraficosPainel(categoriasObj, centrosObj);
+    atualizarGraficosPainel(categoriesObj, centrosObj);
 }
 
 function atualizarGraficosPainel(categoriasObj, centrosObj) {
