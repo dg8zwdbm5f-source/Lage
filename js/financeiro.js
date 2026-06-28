@@ -1,4 +1,3 @@
-// Variáveis para controle dos gráficos
 let chartPizza = null;
 let chartBarras = null;
 
@@ -25,42 +24,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 2. Processa os dados desmembrando os parcelamentos
     dados.forEach(item => {
-        const totalParcelas = parseInt(item.parcela) || 1; // Se for vazio ou 0, vira 1
-        const valorTotal = Number(item.valor) || 0;
+        const totalParcelas = parseInt(item.parcela) || 1;
+        const valorParcela = Number(item.valor) || 0;
         
-        // O valor na planilha já é o valor da parcela individual? 
-        // Se a sua planilha registra o VALOR TOTAL da compra, mude a linha abaixo para: const valorParcela = valorTotal / totalParcelas;
-        const valorParcela = valorTotal; 
-
-        // Descobrir a data base de vencimento (usa a coluna vencimento se houver, senão dataCompra)
-        let dataBaseStr = item.vencimento || item.dataCompra;
-        let dataBase = new Date();
-
-        if (dataBaseStr) {
-            // Trata formatos de data ISO ou strings comuns do Sheets
-            if (dataBaseStr.includes("T")) {
-                dataBase = new Date(dataBaseStr);
-            } else {
-                const partes = dataBaseStr.split("/");
-                if (partes.length === 3) {
-                    // Monta no formato Ano-Mês-Dia para o construtor do JS não dar erro de fuso
-                    dataBase = new Date(partes[2], partes[1] - 1, partes[0]);
-                }
-            }
+        // Identifica a data da planilha de forma inteligente usando o Moment.js
+        // Tenta usar o vencimento, se não houver, usa a data de compra
+        let dataTexto = item.vencimento || item.dataCompra || "";
+        
+        // Limpa o texto caso venha com horários longos do Google
+        if (dataTexto.includes(",")) {
+            dataTexto = dataTexto.split(",")[0]; 
         }
 
-        // Loop para replicar a linha caso seja parcelado
+        // Criar o objeto de data padrão
+        let dataBase = moment(dataTexto, ["DD/MM/YYYY", "YYYY-MM-DD", "DD [de] mmm. [de] YYYY"]);
+
+        // Se o moment não conseguir ler por algum motivo, usa a data de hoje como segurança
+        if (!dataBase.isValid()) {
+            dataBase = moment();
+        }
+
+        // Loop para replicar as parcelas nos meses seguintes
         for (let i = 0; i < totalParcelas; i++) {
-            // Calcula o mês subsequente para cada parcela
-            let dataParcela = new Date(dataBase.getTime());
-            dataParcela.setMonth(dataBase.getMonth() + i);
+            // Clona a data base e adiciona os meses da parcela
+            let dataParcela = dataBase.clone().add(i, 'months');
+            const dataFormatada = dataParcela.format("DD/MM/YYYY");
 
-            const dataFormatada = dataParcela.toLocaleDateString("pt-BR");
-
-            // Acumular valores nos totalizadores globais
+            // Acumular valores totais
             totalGasto += valorParcela;
 
-            // A primeira parcela segue o status da planilha. As parcelas futuras (i > 0) nascem como "Pendente"
+            // Primeira parcela segue a planilha, as demais ficam pendentes
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
@@ -75,18 +68,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 totalPendente += valorParcela;
             }
 
-            // Customiza a descrição para indicar a parcela (ex: Blusa Inlounge (Pág. 1/5))
             const descricaoCustomizada = totalParcelas > 1 
                 ? `${item.descricao || "Sem descrição"} (${i + 1}/${totalParcelas})`
                 : (item.descricao || "-");
 
-            // Agrupamento para os gráficos
+            // Gráficos
             const subcategoria = item.subcategoria || "Outros";
             const centroCusto = item.centroCusto || "Geral";
             categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
-            // Adiciona a linha na tabela de memória
             linhasTabela.push(`
                 <tr>
                     <td>${dataFormatada}</td>
@@ -100,20 +91,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // 3. Injeta as linhas multiplicadas na tabela
+    // 3. Injeta na tabela
     document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
 
-    // 4. Alimenta os cartões com os novos totais projetados
+    // 4. Cartões
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-    document.getElementById("qtdeLancamentos").innerText = linhasTabela.length; // Quantidade total de parcelas geradas
+    document.getElementById("qtdeLancamentos").innerText = linhasTabela.length;
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    // 5. Renderiza os Gráficos atualizados com as projeções futuras
+    // 5. Renderiza Gráficos
     try {
         const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
-        // Gráfico de Pizza/Rosca
         const ctxPizza = document.getElementById('graficoSubcategorias').getContext('2d');
         if (chartPizza) chartPizza.destroy();
         chartPizza = new Chart(ctxPizza, {
@@ -130,13 +120,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#c4c4cc' } }
-                }
+                plugins: { legend: { position: 'right', labels: { color: '#c4c4cc' } } }
             }
         });
 
-        // Gráfico de Barras
         const ctxBarras = document.getElementById('graficoCentroCusto').getContext('2d');
         if (chartBarras) chartBarras.destroy();
         chartBarras = new Chart(ctxBarras, {
@@ -160,6 +147,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     } catch (err) {
-        console.error("Erro ao construir os gráficos:", err);
+        console.error("Erro nos gráficos:", err);
     }
 });
