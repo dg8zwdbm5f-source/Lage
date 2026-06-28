@@ -27,33 +27,66 @@ document.addEventListener("DOMContentLoaded", async () => {
         const totalParcelas = parseInt(item.parcela) || 1;
         const valorParcela = Number(item.valor) || 0;
         
-        // Identifica a data da planilha de forma inteligente usando o Moment.js
-        // Tenta usar o vencimento, se não houver, usa a data de compra
+        // Pega qualquer texto de data válido da planilha
         let dataTexto = item.vencimento || item.dataCompra || "";
-        
-        // Limpa o texto caso venha com horários longos do Google
-        if (dataTexto.includes(",")) {
-            dataTexto = dataTexto.split(",")[0]; 
+        let anoBase = new Date().getFullYear();
+        let mesBase = new Date().getMonth();
+        let diaBase = 1;
+
+        // Limpeza e interpretação nativa de data (Blindagem contra formatos do Sheets)
+        if (dataTexto) {
+            // Se vier no formato ISO clássico do Apps Script (AAAA-MM-DD...)
+            if (dataTexto.includes("-")) {
+                const partesISO = dataTexto.split("T")[0].split("-");
+                if (partesISO.length === 3) {
+                    anoBase = parseInt(partesISO[0]);
+                    mesBase = parseInt(partesISO[1]) - 1;
+                    diaBase = parseInt(partesISO[2]);
+                }
+            } else {
+                // Remove termos como "de" e limpa espaços (Trata: "29 de mai. de 2026")
+                let textoLimpo = dataTexto.replace(/ de /g, " ").replace(/\./g, "").trim();
+                const partes = textoLimpo.split(" ");
+
+                if (partes.length >= 3) {
+                    diaBase = parseInt(partes[0]) || 1;
+                    anoBase = parseInt(partes[partes.length - 1]) || new Date().getFullYear();
+                    
+                    // Mapeamento de meses em português (caso venha por extenso ou abreviado)
+                    const mesesPT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+                    const mesIdentificado = partes[1].toLowerCase().substring(0, 3);
+                    const indexMes = mesesPT.indexOf(mesIdentificado);
+                    
+                    if (indexMes !== -1) {
+                        mesBase = indexMes;
+                    } else if (!isNaN(partes[1])) {
+                        // Se for no formato puro DD/MM/AAAA
+                        mesBase = parseInt(partes[1]) - 1;
+                    }
+                } else if (dataTexto.includes("/")) {
+                    // Trata o padrão clássico DD/MM/AAAA
+                    const partesBarra = dataTexto.split("/");
+                    if (partesBarra.length === 3) {
+                        diaBase = parseInt(partesBarra[0]);
+                        mesBase = parseInt(partesBarra[1]) - 1;
+                        anoBase = parseInt(partesBarra[2]);
+                    }
+                }
+            }
         }
 
-        // Criar o objeto de data padrão
-        let dataBase = moment(dataTexto, ["DD/MM/YYYY", "YYYY-MM-DD", "DD [de] mmm. [de] YYYY"]);
-
-        // Se o moment não conseguir ler por algum motivo, usa a data de hoje como segurança
-        if (!dataBase.isValid()) {
-            dataBase = moment();
-        }
-
-        // Loop para replicar as parcelas nos meses seguintes
+        // 3. Loop para multiplicar as parcelas de forma correta e sequencial
         for (let i = 0; i < totalParcelas; i++) {
-            // Clona a data base e adiciona os meses da parcela
-            let dataParcela = dataBase.clone().add(i, 'months');
-            const dataFormatada = dataParcela.format("DD/MM/YYYY");
+            // Cria um objeto Date nativo focado no fuso horário local
+            let dataParcela = new Date(anoBase, mesBase + i, diaBase);
+            
+            // Força a formatação visual correta em padrão brasileiro DD/MM/AAAA
+            const dataFormatada = dataParcela.toLocaleDateString("pt-BR");
 
             // Acumular valores totais
             totalGasto += valorParcela;
 
-            // Primeira parcela segue a planilha, as demais ficam pendentes
+            // Tratamento de Status
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
@@ -72,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 ? `${item.descricao || "Sem descrição"} (${i + 1}/${totalParcelas})`
                 : (item.descricao || "-");
 
-            // Gráficos
+            // Alimentação dos dados brutos dos gráficos
             const subcategoria = item.subcategoria || "Outros";
             const centroCusto = item.centroCusto || "Geral";
             categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
@@ -91,16 +124,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // 3. Injeta na tabela
+    // 4. Renderiza a tabela inteira na tela de uma só vez
     document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
 
-    // 4. Cartões
+    // 5. Atualiza os Cartões Indicadores
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("qtdeLancamentos").innerText = linhasTabela.length;
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    // 5. Renderiza Gráficos
+    // 6. Desenha os Gráficos de forma segura
     try {
         const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
@@ -147,6 +180,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     } catch (err) {
-        console.error("Erro nos gráficos:", err);
+        console.error("Erro ao desenhar os gráficos:", err);
     }
 });
