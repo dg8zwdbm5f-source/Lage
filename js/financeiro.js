@@ -5,20 +5,35 @@ let dadosGlobais = [];
 document.addEventListener("DOMContentLoaded", async () => {
     const statusDiv = document.getElementById("status-conexao");
     
-    dadosGlobais = await carregarDados();
-    
-    if (!dadosGlobais || dadosGlobais.length === 0) {
-        statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Erro ao conectar ou dados vazios.</span>';
+    // Proteção: Garante que a função da API existe antes de chamar
+    if (typeof carregarDados !== "function") {
+        console.error("A função carregarDados() não foi encontrada. Verifique o arquivo api.js");
+        statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Erro crítico: Script de API não carregado.</span>';
         return;
     }
 
-    statusDiv.style.display = "none";
+    try {
+        dadosGlobais = await carregarDados();
+        
+        if (!dadosGlobais || dadosGlobais.length === 0) {
+            statusDiv.innerHTML = '<span style="color: #ffb800;">⚠ Planilha conectada, mas nenhum dado foi retornado.</span>';
+            return;
+        }
 
-    if (typeof inicializarFiltros === "function") {
-        inicializarFiltros(dadosGlobais);
+        statusDiv.style.display = "none";
+
+        // Inicializa as opções dos dropdowns de Mês e Ano
+        if (typeof inicializarFiltros === "function") {
+            inicializarFiltros(dadosGlobais);
+        }
+
+        // Renderiza a tabela e os gráficos pela primeira vez
+        processarPainel(dadosGlobais);
+
+    } catch (erro) {
+        console.error("Erro ao carregar dados do painel:", erro);
+        statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Falha na comunicação com o Google Sheets.</span>';
     }
-
-    processarPainel(dadosGlobais);
 });
 
 function processarPainel(dadosParaExibir) {
@@ -68,7 +83,6 @@ function processarPainel(dadosParaExibir) {
             const anoNum = dataParcela.getFullYear();
             const vencimentoFormatado = `${mesNome}-${anoNum}`;
 
-            // CONSULTA DOS FILTROS SEPARADOS (Mês e Ano individuais)
             if (typeof filtrarLinhaIndividual === "function") {
                 if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i)) {
                     continue;
