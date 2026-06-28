@@ -96,10 +96,9 @@
             border: 1px solid var(--border-color);
             margin-bottom: 32px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            align-items: flex-end;
         }
 
         .secao-filtros div {
@@ -116,7 +115,7 @@
             letter-spacing: 0.05em;
         }
 
-        .secao-filtros select, .secao-filtros input {
+        .secao-filtros select, .acoes-tabela input {
             width: 100%;
             background-color: var(--bg-input);
             color: var(--text-main);
@@ -131,9 +130,24 @@
 
         .secao-filtros select { cursor: pointer; }
 
-        .secao-filtros select:focus, .secao-filtros input:focus {
+        .secao-filtros select:focus, .acoes-tabela input:focus {
             border-color: var(--cor-lancamentos);
             box-shadow: 0 0 0 2px rgba(153, 109, 255, 0.2);
+        }
+
+        /* --- Bloco Superior da Tabela (Busca e Limpar) --- */
+        .acoes-tabela {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            margin-top: 10px;
+        }
+
+        .busca-container {
+            flex-grow: 1;
+            max-width: 400px;
         }
 
         /* Botão de Limpar Filtros */
@@ -151,6 +165,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            white-space: nowrap;
         }
 
         .btn-limpar:hover {
@@ -222,6 +237,8 @@
 
         @media (max-width: 500px) {
             .container-graficos { grid-template-columns: 1fr; }
+            .acoes-tabela { flex-direction: column; align-items: stretch; }
+            .busca-container { max-width: 100%; }
         }
 
         .bloco-grafico {
@@ -317,10 +334,6 @@
 
         <section class="secao-filtros">
             <div>
-                <label>🔍 Buscar termo</label>
-                <input type="text" id="filtroTexto" placeholder="Fornecedor, item...">
-            </div>
-            <div>
                 <label>📅 Mês Vencimento</label>
                 <select id="filtroMes">
                     <option value="todos">Todos os Meses</option>
@@ -346,7 +359,6 @@
                     <option value="pendente">Pendente</option>
                 </select>
             </div>
-            <button class="btn-limpar" id="btnLimparFiltros">Limpar Filtros</button>
         </section>
 
         <section class="cards">
@@ -383,6 +395,13 @@
             </div>
         </section>
 
+        <section class="acoes-tabela">
+            <div class="busca-container">
+                <input type="text" id="filtroTexto" placeholder="🔍 Buscar por fornecedor ou descrição...">
+            </div>
+            <button class="btn-limpar" id="btnLimparFiltros">Limpar Filtros</button>
+        </section>
+
         <section class="container-tabela">
             <table>
                 <thead>
@@ -401,8 +420,8 @@
         </section>
     </main>
 
-    <script src="js/api.js?v=4.0"></script>
-    <script src="js/filtros.js?v=4.0"></script>
-    <script src="js/financeiro.js?v=4.0"></script>
+    <script src="js/api.js?v=5.0"></script>
+    <script src="js/filtros.js?v=5.0"></script>
+    <script src="js/financeiro.js?v=5.0"></script>
 </body>
 </html>
