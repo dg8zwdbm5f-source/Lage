@@ -167,9 +167,8 @@ function inicializarFiltros(dados) {
  * Validador executado linha por linha.
  */
 function filtrarLinhaIndividual(mesLinha, anoLinha, contaLinha, statusLinha, indiceParcela, itemOriginal) {
-    // 1. CORREÇÃO DA VALIDAÇÃO DO FILTRO DE TEXTO
+    // 1. Filtro de Texto
     if (filtroTextoAtual !== "") {
-        // Acessa de forma segura os dados originais passados pelo loop principal
         const fornecedor = itemOriginal && itemOriginal.fornecedor ? itemOriginal.fornecedor.toString().toLowerCase() : "";
         const descricao = itemOriginal && itemOriginal.descricao ? itemOriginal.descricao.toString().toLowerCase() : "";
         
@@ -193,14 +192,25 @@ function filtrarLinhaIndividual(mesLinha, anoLinha, contaLinha, statusLinha, ind
         return false;
     }
 
-    // 5. Filtro de Status
+    // 5. CORREÇÃO CRÍTICA DO FILTRO DE STATUS
     let statusRealParcela = (statusLinha || "").trim().toLowerCase();
+    
+    // Força parcelas futuras (índice > 0) a serem interpretadas como pendentes
     if (indiceParcela > 0) {
         statusRealParcela = "pendente";
     }
 
-    if (filtroStatusAtual !== "todos" && statusRealParcela !== filtroStatusAtual) {
-        return false;
+    // Se o usuário filtrou por "Pago", aceitamos tanto o termo "pago" quanto "efetuado"
+    if (filtroStatusAtual !== "todos") {
+        if (filtroStatusAtual === "pago") {
+            if (statusRealParcela !== "pago" && statusRealParcela !== "efetuado") {
+                return false;
+            }
+        } else if (filtroStatusAtual === "pendente") {
+            if (statusRealParcela !== "pendente") {
+                return false;
+            }
+        }
     }
 
     return true;
