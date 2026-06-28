@@ -1,60 +1,139 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const statusDiv = document.getElementById("status-conexao");
-    
-    // 1. Busca os dados usando a função do api.js
-    const dados = await carregarDados();
-    
-    if (!dados || dados.length === 0) {
-        statusDiv.innerHTML = '<span style="color: #ff4d4d;">❌ Erro ao carregar ou planilha vazia.</span>';
-        return;
-    }
+/* --- Configurações Globais --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-    // Se chegou aqui, deu certo! Sumir com a mensagem de carregamento
-    statusDiv.style.display = "none";
+body {
+    background-color: #121214;
+    color: #e1e1e6;
+    padding-bottom: 40px;
+}
 
-    let totalGasto = 0;
-    let totalPago = 0;
-    let totalPendente = 0;
-    const tabelaCorpo = document.getElementById("tabelaCorpo");
+header {
+    background-color: #1a1a1e;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #29292e;
+    margin-bottom: 25px;
+}
 
-    // Clear na tabela por segurança
-    tabelaCorpo.innerHTML = "";
+header h1 {
+    font-size: 1.8rem;
+    color: #ffffff;
+}
 
-    // 2. Processar cada linha recebida da planilha
-    dados.forEach(item => {
-        const valor = Number(item.valor) || 0;
-        totalGasto += valor;
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 
-        // Validar status (tratando maiúsculas/minúsculas ou espaços)
-        const statusLimpo = item.status ? item.status.trim().toLowerCase() : "";
-        if (statusLimpo === "pago") {
-            totalPago += valor;
-        } else {
-            totalPendente += valor;
-        }
+/* --- Layout dos Cartões (Resumo) --- */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
 
-        // Formatar data se vier como timestamp do Google
-        let dataFormatada = item.dataCompra;
-        if (dataFormatada && dataFormatada.includes("T")) {
-            dataFormatada = new Date(dataFormatada).toLocaleDateString("pt-BR");
-        }
+.card {
+    background-color: #1a1a1e;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #29292e;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
 
-        // Injetar linha na tabela
-        tabelaCorpo.innerHTML += `
-            <tr>
-                <td>${dataFormatada || "-"}</td>
-                <td>${item.fornecedor || "-"}</td>
-                <td>${item.descricao || "-"}</td>
-                <td>R$ ${valor.toFixed(2).replace(".", ",")}</td>
-                <td>${item.conta || "-"}</td>
-                <td><span class="status-badge ${statusLimpo}">${item.status || "Pendente"}</span></td>
-            </tr>
-        `;
-    });
+.card:hover {
+    transform: translateY(-3px);
+}
 
-    // 3. Atualizar os cartões na tela
-    document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-    document.getElementById("qtdeLancamentos").innerText = dados.length;
-    document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-    document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-});
+.card h3 {
+    font-size: 0.9rem;
+    color: #8d8d99;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card h2 {
+    font-size: 1.6rem;
+    color: #ffffff;
+}
+
+/* Cores específicas para destacar os cartões */
+.card:nth-child(1) h2 { color: #ffb800; } /* Total Gasto */
+.card:nth-child(2) h2 { color: #633bbc; } /* Quantidade */
+.card:nth-child(3) h2 { color: #00b37e; } /* Pago */
+.card:nth-child(4) h2 { color: #f75a68; } /* Pendente */
+
+/* --- Tabela de Lançamentos --- */
+.container-tabela {
+    background-color: #1a1a1e;
+    border-radius: 8px;
+    border: 1px solid #29292e;
+    overflow-x: auto; /* Garante que role no celular se for grande */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 14px 20px;
+    border-bottom: 1px solid #29292e;
+    font-size: 0.95rem;
+}
+
+th {
+    background-color: #202024;
+    color: #c4c4cc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+tr:hover {
+    background-color: #202024;
+}
+
+td {
+    color: #e1e1e6;
+}
+
+/* --- Badges de Status --- */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.status-badge.pago {
+    background-color: rgba(0, 179, 126, 0.1);
+    color: #00b37e;
+    border: 1px solid #00b37e;
+}
+
+.status-badge.pendente {
+    background-color: rgba(247, 90, 104, 0.1);
+    color: #f75a68;
+    border: 1px solid #f75a68;
+}
+
+/* Se na planilha estiver escrito de outra forma (ex: Vencido) */
+.status-badge.vencido {
+    background-color: rgba(255, 184, 0, 0.1);
+    color: #ffb800;
+    border: 1px solid #ffb800;
+}
