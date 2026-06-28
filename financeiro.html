@@ -317,8 +317,15 @@
             justify-content: center;
         }
 
-        .status-badge.pago { background-color: rgba(0, 179, 126, 0.1); color: #04d361; }
-        .status-badge.pendente { background-color: rgba(247, 90, 104, 0.1); color: #f75a68; }
+/* Atualize ou adicione esta linha no seu CSS para pintar o "EFETUADO" de verde */
+.status-badge.pago, .status-badge.efetuado { 
+    background-color: rgba(0, 179, 126, 0.1); 
+    color: #04d361; 
+}
+.status-badge.pendente { 
+    background-color: rgba(247, 90, 104, 0.1); 
+    color: #f75a68; 
+}
     </style>
 </head>
 <body>
