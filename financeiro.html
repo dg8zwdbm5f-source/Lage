@@ -304,22 +304,8 @@
         </section>
     </main>
 
-    <script>
-        // Esta lógica força a carga dos arquivos ignorando o cache do navegador completamente
-        const versao = '?v=' + new Date().getTime();
-        
-        const scripts = [
-            "js/api.js",
-            "js/filtros.js",
-            "js/financeiro.js"
-        ];
-
-        scripts.forEach(src => {
-            const scriptElement = document.createElement('script');
-            scriptElement.src = src + versao;
-            scriptElement.async = false; // Garante a execução na ordem exata
-            document.body.appendChild(scriptElement);
-        });
-    </script>
+    <script src="js/api.js?v=2.0"></script>
+    <script src="js/filtros.js?v=2.0"></script>
+    <script src="js/financeiro.js?v=2.0"></script>
 </body>
 </html>
