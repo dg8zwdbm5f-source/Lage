@@ -5,7 +5,6 @@ let dadosGlobais = [];
 document.addEventListener("DOMContentLoaded", async () => {
     const statusDiv = document.getElementById("status-conexao");
     
-    // Proteção: Garante que a função da API existe antes de chamar
     if (typeof carregarDados !== "function") {
         console.error("A função carregarDados() não foi encontrada. Verifique o arquivo api.js");
         statusDiv.innerHTML = '<span style="color: #f75a68;">❌ Erro crítico: Script de API não carregado.</span>';
@@ -22,12 +21,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         statusDiv.style.display = "none";
 
-        // Inicializa as opções dos dropdowns de Mês e Ano
         if (typeof inicializarFiltros === "function") {
             inicializarFiltros(dadosGlobais);
         }
 
-        // Renderiza a tabela e os gráficos pela primeira vez
         processarPainel(dadosGlobais);
 
     } catch (erro) {
@@ -50,18 +47,25 @@ function processarPainel(dadosParaExibir) {
         const totalParcelas = parseInt(item.parcela) || 1;
         const valorParcela = Number(item.valor) || 0;
         
-        let dataTexto = item.dataCompra || "";
+        let dataTexto = item.dataCompra ? item.dataCompra.toString().trim() : "";
+        
+        // Valores padrão caso falhe o parse
         let diaBase = 1;
         let mesBase = new Date().getMonth();
         let anoBase = new Date().getFullYear();
 
+        // --- TRATAMENTO ROBUSTO DE DATA (ISO OU PT-BR) ---
         if (dataTexto) {
-            if (dataTexto.includes("T")) dataTexto = dataTexto.split("T")[0];
+            // Se vier no formato ISO completo (ex: 2026-05-29T03:00:00.000Z), limpa a hora
+            if (dataTexto.includes("T")) {
+                dataTexto = dataTexto.split("T")[0];
+            }
+            
             if (dataTexto.includes("-")) {
                 const partes = dataTexto.split("-");
                 if (partes.length === 3) {
                     anoBase = parseInt(partes[0]);
-                    mesBase = parseInt(partes[1]) - 1;
+                    mesBase = parseInt(partes[1]) - 1; // Meses no JS vão de 0 a 11
                     diaBase = parseInt(partes[2]);
                 }
             } else if (dataTexto.includes("/")) {
@@ -74,10 +78,41 @@ function processarPainel(dadosParaExibir) {
             }
         }
 
+        // Reconstrói a Data de Compra no padrão visual DD/MM/AAAA limpo
         const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}/${anoBase}`;
 
+        // --- AJUSTE DE VENCIMENTO DO GOOGLE SHEETS ---
+        // Lendo o campo vencimento enviado pela planilha para alinhar o primeiro mês
+        let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
+        let mesVencimentoBase = mesBase; 
+        let anoVencimentoBase = anoBase;
+
+        if (vencimentoTexto) {
+            if (vencimentoTexto.includes("T")) vencimentoTexto = vencimentoTexto.split("T")[0];
+            
+            if (vencimentoTexto.includes("-")) {
+                const partesV = vencimentoTexto.split("-");
+                if (partesV.length === 3) {
+                    anoVencimentoBase = parseInt(partesV[0]);
+                    mesVencimentoBase = parseInt(partesV[1]) - 1;
+                }
+            } else if (vencimentoTexto.includes("/")) {
+                const partesV = vencimentoTexto.split("/");
+                if (partesV.length === 3) {
+                    // Trata se for DD/MM/AAAA ou MM/AAAA
+                    mesVencimentoBase = parseInt(partesV[1]) - 1;
+                    anoVencimentoBase = parseInt(partesV[2]);
+                }
+            }
+        } else {
+            // Se não houver coluna de vencimento preenchida, assume o mês seguinte ao da compra
+            mesVencimentoBase = mesBase + 1;
+        }
+
+        // Loop gerador de parcelas baseado na data real de vencimento da planilha
         for (let i = 0; i < totalParcelas; i++) {
-            let dataParcela = new Date(anoBase, mesBase + i, diaBase);
+            // Cria a data da parcela respeitando o mês e ano corretos de vencimento informados
+            let dataParcela = new Date(anoVencimentoBase, mesVencimentoBase + i, 1);
             
             const mesNome = mesesAbreviados[dataParcela.getMonth()];
             const anoNum = dataParcela.getFullYear();
