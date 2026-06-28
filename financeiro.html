@@ -14,7 +14,43 @@
     </header>
 
     <main>
-        <p>Estrutura inicial criada com sucesso!</p>
+        <div id="status-conexao" style="padding: 10px; font-weight: bold;">Carregando dados da planilha...</div>
+
+        <section class="cards">
+            <div class="card">
+                <h3>Total Gasto</h3>
+                <h2 id="totalGasto">R$ 0,00</h2>
+            </div>
+            <div class="card">
+                <h3>Lançamentos</h3>
+                <h2 id="qtdeLancamentos">0</h2>
+            </div>
+            <div class="card">
+                <h3>Pago</h3>
+                <h2 id="totalPago">R$ 0,00</h2>
+            </div>
+            <div class="card">
+                <h3>Pendente</h3>
+                <h2 id="totalPendente">R$ 0,00</h2>
+            </div>
+        </section>
+
+        <section class="container-tabela">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Fornecedor</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th>Conta</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo">
+                    </tbody>
+            </table>
+        </section>
     </main>
 
     <script src="js/api.js"></script>
