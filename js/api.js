@@ -4,11 +4,11 @@ async function carregarDados() {
     try {
         const resposta = await fetch(API_URL);
         if (!resposta.ok) {
-            throw new Error(`Erro na requisição: ${resposta.status}`);
+            throw new Error(`Erro de rede: ${resposta.status}`);
         }
         return await resposta.json();
     } catch (erro) {
-        console.error("Erro ao buscar dados da planilha:", erro);
+        console.error("Falha ao buscar dados do Apps Script:", erro);
         return [];
     }
 }
