@@ -23,53 +23,93 @@ document.addEventListener("DOMContentLoaded", async () => {
     const categoriasObj = {};
     const centrosObj = {};
 
-    // 2. Processa os dados (Tabela + Agrupamento dos Gráficos)
+    // 2. Processa os dados desmembrando os parcelamentos
     dados.forEach(item => {
-        const valor = Number(item.valor) || 0;
-        totalGasto += valor;
+        const totalParcelas = parseInt(item.parcela) || 1; // Se for vazio ou 0, vira 1
+        const valorTotal = Number(item.valor) || 0;
+        
+        // O valor na planilha já é o valor da parcela individual? 
+        // Se a sua planilha registra o VALOR TOTAL da compra, mude a linha abaixo para: const valorParcela = valorTotal / totalParcelas;
+        const valorParcela = valorTotal; 
 
-        // Separação de Status
-        const statusLimpo = item.status ? item.status.trim().toLowerCase() : "";
-        if (statusLimpo === "pago") {
-            totalPago += valor;
-        } else {
-            totalPendente += valor;
+        // Descobrir a data base de vencimento (usa a coluna vencimento se houver, senão dataCompra)
+        let dataBaseStr = item.vencimento || item.dataCompra;
+        let dataBase = new Date();
+
+        if (dataBaseStr) {
+            // Trata formatos de data ISO ou strings comuns do Sheets
+            if (dataBaseStr.includes("T")) {
+                dataBase = new Date(dataBaseStr);
+            } else {
+                const partes = dataBaseStr.split("/");
+                if (partes.length === 3) {
+                    // Monta no formato Ano-Mês-Dia para o construtor do JS não dar erro de fuso
+                    dataBase = new Date(partes[2], partes[1] - 1, partes[0]);
+                }
+            }
         }
 
-        // Agrupamento para os gráficos
-        const subcategoria = item.subcategoria || "Outros";
-        const centroCusto = item.centroCusto || "Geral";
-        categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valor;
-        centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valor;
+        // Loop para replicar a linha caso seja parcelado
+        for (let i = 0; i < totalParcelas; i++) {
+            // Calcula o mês subsequente para cada parcela
+            let dataParcela = new Date(dataBase.getTime());
+            dataParcela.setMonth(dataBase.getMonth() + i);
 
-        // Formatação de data
-        let dataFormatada = item.dataCompra;
-        if (dataFormatada && dataFormatada.includes("T")) {
-            dataFormatada = new Date(dataFormatada).toLocaleDateString("pt-BR");
+            const dataFormatada = dataParcela.toLocaleDateString("pt-BR");
+
+            // Acumular valores nos totalizadores globais
+            totalGasto += valorParcela;
+
+            // A primeira parcela segue o status da planilha. As parcelas futuras (i > 0) nascem como "Pendente"
+            let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
+            let statusBadgeTexto = item.status || "Pendente";
+            
+            if (i > 0) {
+                statusParcela = "pendente";
+                statusBadgeTexto = "Pendente";
+            }
+
+            if (statusParcela === "pago") {
+                totalPago += valorParcela;
+            } else {
+                totalPendente += valorParcela;
+            }
+
+            // Customiza a descrição para indicar a parcela (ex: Blusa Inlounge (Pág. 1/5))
+            const descricaoCustomizada = totalParcelas > 1 
+                ? `${item.descricao || "Sem descrição"} (${i + 1}/${totalParcelas})`
+                : (item.descricao || "-");
+
+            // Agrupamento para os gráficos
+            const subcategoria = item.subcategoria || "Outros";
+            const centroCusto = item.centroCusto || "Geral";
+            categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
+            centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
+
+            // Adiciona a linha na tabela de memória
+            linhasTabela.push(`
+                <tr>
+                    <td>${dataFormatada}</td>
+                    <td>${item.fornecedor || "-"}</td>
+                    <td>${descricaoCustomizada}</td>
+                    <td>R$ ${valorParcela.toFixed(2).replace(".", ",")}</td>
+                    <td>${item.conta || "-"}</td>
+                    <td><span class="status-badge ${statusParcela}">${statusBadgeTexto}</span></td>
+                </tr>
+            `);
         }
-
-        linhasTabela.push(`
-            <tr>
-                <td>${dataFormatada || "-"}</td>
-                <td>${item.fornecedor || "-"}</td>
-                <td>${item.descricao || "-"}</td>
-                <td>R$ ${valor.toFixed(2).replace(".", ",")}</td>
-                <td>${item.conta || "-"}</td>
-                <td><span class="status-badge ${statusLimpo}">${item.status || "Pendente"}</span></td>
-            </tr>
-        `);
     });
 
-    // 3. Injeta as linhas na tabela
+    // 3. Injeta as linhas multiplicadas na tabela
     document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
 
-    // 4. Alimenta os cartões
+    // 4. Alimenta os cartões com os novos totais projetados
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-    document.getElementById("qtdeLancamentos").innerText = dados.length;
+    document.getElementById("qtdeLancamentos").innerText = linhasTabela.length; // Quantidade total de parcelas geradas
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    // 5. Renderiza os Gráficos de forma segura
+    // 5. Renderiza os Gráficos atualizados com as projeções futuras
     try {
         const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
