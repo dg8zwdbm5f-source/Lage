@@ -50,7 +50,39 @@
             border: 1px solid #29292e;
         }
 
-        /* --- Layout dos Cartões (Resumo) --- */
+        /* --- Layout do Bloco de Filtros --- */
+        .secao-filtros {
+            background-color: #1a1a1e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #29292e;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .secao-filtros label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8d8d99;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .secao-filtros select {
+            width: 100%;
+            background-color: #121214;
+            color: #e1e1e6;
+            border: 1px solid #29292e;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        /* --- Layout os Cartões (Resumo) --- */
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -84,11 +116,10 @@
             color: #ffffff;
         }
 
-        /* Cores dos Indicadores dos Cartões */
-        .cards .card:nth-child(1) h2 { color: #ffb800; } /* Total Gasto */
-        .cards .card:nth-child(2) h2 { color: #633bbc; } /* Quantidade */
-        .cards .card:nth-child(3) h2 { color: #00b37e; } /* Pago */
-        .cards .card:nth-child(4) h2 { color: #f75a68; } /* Pendente */
+        .cards .card:nth-child(1) h2 { color: #ffb800; }
+        .cards .card:nth-child(2) h2 { color: #633bbc; }
+        .cards .card:nth-child(3) h2 { color: #00b37e; }
+        .cards .card:nth-child(4) h2 { color: #f75a68; }
 
         /* --- Layout dos Gráficos --- */
         .container-graficos {
@@ -159,11 +190,8 @@
             background-color: #202024;
         }
 
-        td {
-            color: #e1e1e6;
-        }
+        td { color: #e1e1e6; }
 
-        /* --- Badges de Status --- */
         .status-badge {
             padding: 4px 10px;
             border-radius: 4px;
@@ -194,6 +222,29 @@
 
     <main>
         <div id="status-conexao">Carregando dados da planilha...</div>
+
+        <section class="secao-filtros">
+            <div>
+                <label>📅 Vencimento</label>
+                <select id="filtroVencimento">
+                    <option value="todos">Todos os Meses</option>
+                </select>
+            </div>
+            <div>
+                <label>💳 Conta / Cartão</label>
+                <select id="filtroConta">
+                    <option value="todos">Todas as Contas</option>
+                </select>
+            </div>
+            <div>
+                <label>🚦 Status</label>
+                <select id="filtroStatus">
+                    <option value="todos">Todos os Status</option>
+                    <option value="pago">Pago</option>
+                    <option value="pendente">Pendente</option>
+                </select>
+            </div>
+        </section>
 
         <section class="cards">
             <div class="card">
@@ -248,7 +299,6 @@
     </main>
 
     <script src="js/api.js"></script>
-    <script src="js/graficos.js"></script>
     <script src="js/filtros.js"></script>
     <script src="js/financeiro.js"></script>
 </body>
