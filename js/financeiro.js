@@ -1,11 +1,10 @@
 let chartPizza = null;
 let chartBarras = null;
-let dadosGlobais = []; // Escopo global para os filtros acessarem na memória
+let dadosGlobais = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
     const statusDiv = document.getElementById("status-conexao");
     
-    // Carrega os dados vindos do arquivo js/api.js
     dadosGlobais = await carregarDados();
     
     if (!dadosGlobais || dadosGlobais.length === 0) {
@@ -15,16 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     statusDiv.style.display = "none";
 
-    // Alimenta os dropdowns com as opções reais extraídas dos dados da planilha
     if (typeof inicializarFiltros === "function") {
         inicializarFiltros(dadosGlobais);
     }
 
-    // Processa a renderização inicial do painel com todos os dados
     processarPainel(dadosGlobais);
 });
 
-// Função centralizadora chamada na carga inicial e sempre que um filtro é alterado
 function processarPainel(dadosParaExibir) {
     let totalGasto = 0;
     let totalPago = 0;
@@ -44,11 +40,8 @@ function processarPainel(dadosParaExibir) {
         let mesBase = new Date().getMonth();
         let anoBase = new Date().getFullYear();
 
-        // Faz a leitura limpa da data recebida do Google Sheets (formato ISO)
         if (dataTexto) {
-            if (dataTexto.includes("T")) {
-                dataTexto = dataTexto.split("T")[0];
-            }
+            if (dataTexto.includes("T")) dataTexto = dataTexto.split("T")[0];
             if (dataTexto.includes("-")) {
                 const partes = dataTexto.split("-");
                 if (partes.length === 3) {
@@ -66,18 +59,18 @@ function processarPainel(dadosParaExibir) {
             }
         }
 
-        // Formatação estrita da Data Compra como DD/MM/AAAA
         const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}/${anoBase}`;
 
-        // Loop para multiplicar e calcular projeções de parcelamento
         for (let i = 0; i < totalParcelas; i++) {
             let dataParcela = new Date(anoBase, mesBase + i, diaBase);
             
-            const vencimentoFormatado = `${mesesAbreviados[dataParcela.getMonth()]}-${dataParcela.getFullYear()}`;
+            const mesNome = mesesAbreviados[dataParcela.getMonth()];
+            const anoNum = dataParcela.getFullYear();
+            const vencimentoFormatado = `${mesNome}-${anoNum}`;
 
-            // CONSULTA DO FILTRO: se a linha/parcela não passar nos critérios, ela é ignorada na soma e visualização
+            // CONSULTA DOS FILTROS SEPARADOS (Mês e Ano individuais)
             if (typeof filtrarLinhaIndividual === "function") {
-                if (!filtrarLinhaIndividual(vencimentoFormatado, item.conta, item.status, i)) {
+                if (!filtrarLinhaIndividual(mesNome, anoNum, item.conta, item.status, i)) {
                     continue;
                 }
             }
@@ -87,7 +80,6 @@ function processarPainel(dadosParaExibir) {
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
-            // Parcelas futuras nascem implicitamente como pendentes
             if (i > 0) {
                 statusParcela = "pendente";
                 statusBadgeTexto = "Pendente";
@@ -123,14 +115,12 @@ function processarPainel(dadosParaExibir) {
         }
     });
 
-    // Injeta os resultados filtrados na tela de uma única vez
     document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("qtdeLancamentos").innerText = linhasTabela.length;
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    // Atualiza os componentes de gráficos analíticos
     atualizarGraficosPainel(categoriasObj, centrosObj);
 }
 
