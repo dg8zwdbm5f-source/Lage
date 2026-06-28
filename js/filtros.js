@@ -1,26 +1,30 @@
-// Variáveis de controle de estado dos filtros
-let filtroVencimentoAtual = "todos";
+// Variáveis globais de controle de estado do filtro
+let filtroMesAtual = "todos";
+let filtroAnoAtual = "todos";
 let filtroContaAtual = "todos";
 let filtroStatusAtual = "todos";
 
 /**
- * Mapeia os dados gerais do Sheets e monta de forma única as opções 
- * de seleção dentro de cada menu dropdown do cabeçalho.
+ * Coleta os dados reais, separa Mês e Ano, ordena os arrays
+ * de menor para maior e injeta nos dropdowns correspondentes.
  */
 function inicializarFiltros(dados) {
-    const selectVencimento = document.getElementById("filtroVencimento");
+    const selectMes = document.getElementById("filtroMes");
+    const selectAno = document.getElementById("filtroAno");
     const selectConta = document.getElementById("filtroConta");
     const selectStatus = document.getElementById("filtroStatus");
 
-    if (!selectVencimento || !selectConta || !selectStatus) {
-        console.error("Os elementos estruturais de filtro não foram encontrados.");
+    if (!selectMes || !selectAno || !selectConta || !selectStatus) {
+        console.error("Os componentes de filtragem Mês/Ano não foram achados no HTML.");
         return;
     }
 
-    // Conjuntos para impedir a duplicação de strings nos dropdowns
     const mesesSet = new Set();
+    const anosSet = new Set();
     const contasSet = new Set();
-    const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    
+    // Lista de referência cronológica para ordenação correta dos meses
+    const mesesReferencia = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     dados.forEach(item => {
         const totalParcelas = parseInt(item.parcela) || 1;
@@ -53,23 +57,35 @@ function inicializarFiltros(dados) {
             contasSet.add(item.conta.trim());
         }
 
-        // Varre as parcelas calculadas para adicionar os meses de vencimento gerados nas opções
+        // Calcula as parcelas futuras para extrair meses e anos reais
         for (let i = 0; i < totalParcelas; i++) {
             let dataParcela = new Date(anoBase, mesBase + i, diaBase);
-            const chaveMesAno = `${mesesAbreviados[dataParcela.getMonth()]}-${dataParcela.getFullYear()}`;
-            mesesSet.add(chaveMesAno);
+            mesesSet.add(mesesReferencia[dataParcela.getMonth()]);
+            anosSet.add(dataParcela.getFullYear());
         }
     });
 
-    // Popula o campo dinâmico de Vencimento
-    Array.from(mesesSet).forEach(mesAno => {
+    // 1. ORDENAR E POPULAR MESES (Seguindo a ordem cronológica correta de Jan a Dez)
+    const mesesOrdenados = Array.from(mesesSet).sort((a, b) => {
+        return mesesReferencia.indexOf(a) - mesesReferencia.indexOf(b);
+    });
+    mesesOrdenados.forEach(mes => {
         const opcao = document.createElement("option");
-        opcao.value = mesAno;
-        opcao.textContent = mesAno;
-        selectVencimento.appendChild(opcao);
+        opcao.value = mes;
+        opcao.textContent = mes;
+        selectMes.appendChild(opcao);
     });
 
-    // Popula o campo dinâmico de Contas ordenado alfabeticamente
+    // 2. ORDENAR E POPULAR ANOS (Do menor ano para o maior ano numérico)
+    const anosOrdenados = Array.from(anosSet).sort((a, b) => a - b);
+    anosOrdenados.forEach(ano => {
+        const opcao = document.createElement("option");
+        opcao.value = ano.toString();
+        opcao.textContent = ano;
+        selectAno.appendChild(opcao);
+    });
+
+    // 3. ORDENAR E POPULAR CONTAS
     Array.from(contasSet).sort().forEach(conta => {
         const opcao = document.createElement("option");
         opcao.value = conta;
@@ -77,9 +93,14 @@ function inicializarFiltros(dados) {
         selectConta.appendChild(opcao);
     });
 
-    // --- ESCUTADORES DE EVENTOS (LISTENERS DE MUDANÇA) ---
-    selectVencimento.addEventListener("change", (e) => {
-        filtroVencimentoAtual = e.target.value;
+    // --- ESCUTADORES DE EVENTO DE MUDANÇA (LISTENERS) ---
+    selectMes.addEventListener("change", (e) => {
+        filtroMesAtual = e.target.value;
+        dispararRedesenhoPainel();
+    });
+
+    selectAno.addEventListener("change", (e) => {
+        filtroAnoAtual = e.target.value;
         dispararRedesenhoPainel();
     });
 
@@ -95,21 +116,28 @@ function inicializarFiltros(dados) {
 }
 
 /**
- * Validador individual executado linha a linha dentro do loop de parcelas do financeiro.js
- * Retorna true se a parcela atende aos critérios ou false se deve ser ocultada.
+ * Validador individual executado linha por linha pelo loop principal.
  */
-function filtrarLinhaIndividual(vencimentoLinha, contaLinha, statusLinha, indiceParcela) {
-    if (filtroVencimentoAtual !== "todos" && vencimentoLinha !== filtroVencimentoAtual) {
+function filtrarLinhaIndividual(mesLinha, anoLinha, contaLinha, statusLinha, indiceParcela) {
+    // Validação do Filtro Separado de Mês
+    if (filtroMesAtual !== "todos" && mesLinha !== filtroMesAtual) {
         return false;
     }
 
+    // Validação do Filtro Separado de Ano
+    if (filtroAnoAtual !== "todos" && anoLinha.toString() !== filtroAnoAtual) {
+        return false;
+    }
+
+    // Validação do Filtro de Conta / Cartão
     if (filtroContaAtual !== "todos" && (contaLinha || "").trim() !== filtroContaAtual) {
         return false;
     }
 
+    // Validação do Filtro de Status
     let statusRealParcela = (statusLinha || "").trim().toLowerCase();
     if (indiceParcela > 0) {
-        statusRealParcela = "pendente"; // Parcelas clonadas futuras começam como pendente
+        statusRealParcela = "pendente";
     }
 
     if (filtroStatusAtual !== "todos" && statusRealParcela !== filtroStatusAtual) {
@@ -119,9 +147,6 @@ function filtrarLinhaIndividual(vencimentoLinha, contaLinha, statusLinha, indice
     return true;
 }
 
-/**
- * Solicita que o processador principal recalcule e redesenhe a tela com os filtros vigentes
- */
 function dispararRedesenhoPainel() {
     if (typeof processarPainel === "function" && typeof dadosGlobais !== "undefined") {
         processarPainel(dadosGlobais);
