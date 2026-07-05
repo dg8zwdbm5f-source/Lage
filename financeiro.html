@@ -332,19 +332,19 @@
     </div>
 
     <script>
+        // CONEXÃO DIRETA COM A PLANILHA (SEM PRECISAR DE API.JS EXTERNO)
+        async function carregarDados() {
+            const URL_DIRETA = "https://script.google.com/macros/s/AKfycbxN55l50E9uas4fxJ8lrCflpDctpiQcOzCmKZtzf2g/dev"; 
+            const resposta = await fetch(URL_DIRETA);
+            return await resposta.json();
+        }
+
         let chartPizza = null, chartBarras = null, chartMensal = null;
         let dadosGlobais = [];
         let filtroTextoAtual = "";
 
         document.addEventListener("DOMContentLoaded", async () => {
             const statusDiv = document.getElementById("status-conexao");
-            
-            if (typeof carregarDados !== "function") {
-                console.error("Função carregarDados() ausente no api.js.");
-                statusDiv.innerText = "❌ Erro API";
-                return;
-            }
-
             try {
                 dadosGlobais = await carregarDados();
                 if (!dadosGlobais || dadosGlobais.length === 0) {
@@ -377,13 +377,12 @@
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
             dadosParaExibir.forEach(item => {
-                // Descarta a linha de títulos caso o script a envie por engano
                 if (!item.dataCompra || item.dataCompra === "Data Compra") return;
 
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
                 
-                // Mapeamento idêntico à resposta JSON estruturada
+                // Mapeia .categoria direto do JSON validado
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
 
                 let dataTexto = (item.dataCompra || "").toString().trim();
@@ -451,7 +450,6 @@
                     const centro = item.centroCusto && item.centroCusto.toString().trim() !== "" ? item.centroCusto.trim() : "Geral";
                     const conta = item.conta || "-";
                     
-                    // Incrementa os dicionários para os gráficos
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
 
@@ -556,6 +554,5 @@
             } catch (e) {}
         }
     </script>
-    <script src="js/api.js?v=5"></script>
 </body>
 </html>
