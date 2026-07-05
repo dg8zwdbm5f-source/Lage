@@ -16,11 +16,10 @@
             --bg-input: #22222a;
             --border: #2c2c35;
             --text-main: #f5f5f7;
-            --text-secondary: #9a9a1a;
+            --text-secondary: #a8a8b3;
             --text-muted: #6e6e77;
             
             --brand: #996dff;
-            --brand-glow: rgba(153, 109, 255, 0.15);
             --success: #00b37e;
             --danger: #f75a68;
             --warning: #ffb800;
@@ -45,13 +44,12 @@
 
         .app-container {
             width: 100%;
-            max-width: 480px; /* Limita ao tamanho perfeito de um smartphone */
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        /* --- Header Minimalista --- */
         header {
             display: flex;
             justify-content: space-between;
@@ -74,7 +72,7 @@
             color: var(--warning);
         }
 
-        /* --- Card de Saldo Principal --- */
+        /* --- Card de Saldo --- */
         .balance-card {
             background: linear-gradient(135deg, #181424 0%, var(--bg-surface) 100%);
             border: 1px solid rgba(153, 109, 255, 0.2);
@@ -99,7 +97,7 @@
 
         .balance-card p {
             font-size: 0.8rem;
-            color: #a8a8b3;
+            color: var(--text-secondary);
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.05em;
@@ -132,9 +130,33 @@
             font-weight: 600;
         }
         .sub-item.pago span { color: var(--success); }
-        .sub-item.pendente span { color: var(--danger); }
+        .sub-item.orcamento span { color: var(--warning); }
 
-        /* --- Filtros / Pesquisa Mobile compactos --- */
+        /* --- Progress Bar de Orçamento --- */
+        .budget-progress-container {
+            margin-top: 14px;
+        }
+        .budget-progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .progress-bar-bg {
+            background: var(--bg-input);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: var(--brand);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        /* --- Busca --- */
         .search-box {
             position: relative;
         }
@@ -148,11 +170,6 @@
             color: var(--text-main);
             font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-box input:focus {
-            border-color: var(--brand);
         }
 
         .search-box::before {
@@ -165,7 +182,7 @@
             opacity: 0.6;
         }
 
-        /* --- Seletor Quick-Tabs para os Gráficos --- */
+        /* --- Tabs --- */
         .chart-tabs {
             display: flex;
             background: var(--bg-surface);
@@ -184,7 +201,6 @@
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .tab-btn.active {
@@ -212,7 +228,7 @@
             display: block;
         }
 
-        /* --- Lista Estilo Extrato --- */
+        /* --- Lista Extrato --- */
         .section-title {
             font-size: 0.95rem;
             font-weight: 600;
@@ -237,7 +253,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.2s;
         }
 
         .tx-left {
@@ -259,7 +274,8 @@
             font-size: 0.75rem;
             color: var(--text-muted);
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
             align-items: center;
         }
 
@@ -268,6 +284,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.7rem;
+            color: var(--text-secondary);
         }
 
         .tx-right {
@@ -280,14 +297,12 @@
         .tx-value {
             font-size: 1rem;
             font-weight: 700;
-            letter-spacing: -0.01em;
         }
 
         .tx-status {
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.03em;
         }
         .tx-status.pago, .tx-status.efetuado { color: var(--success); }
         .tx-status.pendente { color: var(--danger); }
@@ -307,18 +322,28 @@
             
             <div class="balance-sub">
                 <div class="sub-item pago">
-                    <h4>Efetuado</h4>
+                    <h4>Pago / Efetuado</h4>
                     <span id="totalPago">R$ 0,00</span>
                 </div>
-                <div class="sub-item pendente">
-                    <h4>Pendente</h4>
-                    <span id="totalPendente">R$ 0,00</span>
+                <div class="sub-item orcamento">
+                    <h4>Orçamento Total</h4>
+                    <span id="totalOrcamento">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="budget-progress-container">
+                <div class="budget-progress-header">
+                    <span>Uso do Orçamento</span>
+                    <span id="budgetPercent">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
                 </div>
             </div>
         </section>
 
         <section class="search-box">
-            <input type="text" id="filtroTexto" placeholder="Buscar estabelecimento ou descrição...">
+            <input type="text" id="filtroTexto" placeholder="Buscar por categoria, fornecedor...">
         </section>
 
         <section style="display: flex; flex-direction: column; gap: 10px;">
@@ -330,7 +355,7 @@
             
             <div class="chart-display-wrapper">
                 <div class="chart-container active" id="c0"><canvas id="graficoMensal"></canvas></div>
-                <div class="chart-container" id="c1"><canvas id="graficoSubcategorias"></canvas></div>
+                <div class="chart-container" id="c1"><canvas id="graficoCategorias"></canvas></div>
                 <div class="chart-container" id="c2"><canvas id="graficoCentroCusto"></canvas></div>
             </div>
         </section>
@@ -340,24 +365,20 @@
                 <span>Histórico de Lançamentos</span>
                 <span id="qtdeLancamentos" style="font-size: 0.8rem; font-weight: normal;">0 itens</span>
             </div>
-            <div class="transaction-list" id="tabelaCorpo">
-                </div>
+            <div class="transaction-list" id="tabelaCorpo"></div>
         </section>
     </div>
 
     <script>
-        // Variáveis do Estado do App
         let chartPizza = null, chartBarras = null, chartMensal = null;
         let dadosGlobais = [];
         let filtroTextoAtual = "";
 
-        // Inicializador automático
         document.addEventListener("DOMContentLoaded", async () => {
             const statusDiv = document.getElementById("status-conexao");
             
-            // Simulação/Checagem da existência do carregamento do api.js
             if (typeof carregarDados !== "function") {
-                console.error("Função carregarDados() ausente.");
+                console.error("Função carregarDados() ausente no api.js.");
                 statusDiv.innerText = "❌ Erro API";
                 return;
             }
@@ -370,7 +391,6 @@
                 }
                 statusDiv.style.display = "none";
                 
-                // Monitoramento do input de busca mobile
                 document.getElementById("filtroTexto").addEventListener("input", (e) => {
                     filtroTextoAtual = e.target.value.toLowerCase().trim();
                     processarPainel(dadosGlobais);
@@ -383,19 +403,13 @@
             }
         });
 
-        // Alternador de Abas de Gráfico Mobile
         function switchTab(index) {
-            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-                btn.classList.toggle('active', i === index);
-            });
-            document.querySelectorAll('.chart-container').forEach((cont, i) => {
-                cont.classList.toggle('active', i === index);
-            });
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
+            document.querySelectorAll('.chart-container').forEach((cont, i) => cont.classList.toggle('active', i === index));
         }
 
-        // Processamento Central de Dados
         function processarPainel(dadosParaExibir) {
-            let totalGasto = 0, totalPago = 0, totalPendente = 0;
+            let totalGasto = 0, totalPago = 0, totalOrcamento = 0;
             const parcelasProcessadas = [];
             const categoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -403,8 +417,11 @@
             dadosParaExibir.forEach(item => {
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
+                const valorOrcamento = Number(item.orcamento) || 0; // Capturando coluna real de Orçamento
                 
-                // Tratamento simplificado de datas nativas
+                // Mapeamento de Categoria oficial ignorando subcategoria
+                const categoriaReal = item.categoria && item.categoria.trim() !== "" ? item.categoria.trim() : "Outros";
+
                 let dataTexto = item.dataCompra ? item.dataCompra.toString().trim() : "";
                 let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
 
@@ -446,30 +463,31 @@
                     const anoNum = dataParcela.getFullYear();
                     const vencimentoFormatado = `${mesNome}/${String(anoNum).substring(2)}`;
 
-                    // Lógica local integrada de filtragem por texto
+                    // Filtro inteligente mobile
                     const fornecedor = item.fornecedor ? item.fornecedor.toString().toLowerCase() : "";
-                    const descricao = item.descricao ? item.descricao.toString().toLowerCase() : "";
-                    if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descricao.includes(filtroTextoAtual)) {
+                    const descText = item.descricao ? item.descricao.toString().toLowerCase() : "";
+                    const catText = categoriaReal.toLowerCase();
+                    
+                    if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual)) {
                         continue;
                     }
 
                     totalGasto += valorParcela;
+                    totalOrcamento += (valorOrcamento / totalParcelas); // Dilui o orçamento se houver divisão lógica
+
                     let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
                     let statusBadgeTexto = item.status || "Pendente";
-                    
                     if (i > 0) { statusParcela = "pendente"; statusBadgeTexto = "Pendente"; }
 
                     if (statusParcela === "pago" || statusParcela === "efetuado") {
                         totalPago += valorParcela;
-                    } else {
-                        totalPendente += valorParcela;
                     }
 
                     const descCustomizada = totalParcelas > 1 ? `${item.descricao || "Item"} (${i + 1}/${totalParcelas})` : (item.descricao || "-");
-                    const subcat = item.subcategoria && item.subcategoria.trim() !== "" ? item.subcategoria.trim() : "Outros";
                     const centro = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
                     
-                    categoriasObj[subcat] = (categoriasObj[subcat] || 0) + valorParcela;
+                    // Consolidação focada na nova Categoria Principal
+                    categoriasObj[categoriaReal] = (categoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
 
                     const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
@@ -485,6 +503,7 @@
                         fornecedor: item.fornecedor || "Fornecedor",
                         descricao: descCustomizada,
                         valor: valorParcela,
+                        categoria: categoriaReal,
                         conta: item.conta || "Conta",
                         statusClasse: statusParcela,
                         statusTexto: statusBadgeTexto
@@ -492,17 +511,15 @@
                 }
             });
 
-            // Ordenar histórico por mais recente
             parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
 
-            // Geração da lista compacta mobile (estilo banco)
             const wrapperTabela = parcelasProcessadas.map(p => `
                 <div class="tx-item">
                     <div class="tx-left">
                         <span class="tx-title">${p.fornecedor}</span>
                         <div class="tx-meta">
                             <span>${p.dataCompraStr}</span>
-                            <span class="tx-tag">${p.vencimentoStr}</span>
+                            <span class="tx-tag">${p.categoria}</span>
                             <span class="tx-tag">${p.conta}</span>
                         </div>
                     </div>
@@ -513,24 +530,38 @@
                 </div>
             `);
 
+            // Atualização dos elementos na tela
             document.getElementById("tabelaCorpo").innerHTML = wrapperTabela.join("") || '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhum item encontrado</p>';
             document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
             document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-            document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+            document.getElementById("totalOrcamento").innerText = "R$ " + totalOrcamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+            // Cálculo dinâmico da barra de progresso do Orçamento
+            const porcentagemUso = totalOrcamento > 0 ? Math.min(Math.round((totalGasto / totalOrcamento) * 100), 100) : 0;
+            document.getElementById("budgetPercent").innerText = porcentagemUso + "%";
+            document.getElementById("progressBarFill").style.width = porcentagemUso + "%";
+
+            // Troca de cor da barra caso estoure o orçamento
+            if(porcentagemUso >= 100) {
+                document.getElementById("progressBarFill").style.backgroundColor = "var(--danger)";
+            } else if (porcentagemUso >= 80) {
+                document.getElementById("progressBarFill").style.backgroundColor = "var(--warning)";
+            } else {
+                document.getElementById("progressBarFill").style.backgroundColor = "var(--brand)";
+            }
 
             atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj);
         }
 
-        // Renderização Otimizada dos Gráficos com Cores Modernas
         function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj) {
-            const coresPaleta = ['#996dff', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6'];
+            const coresPaleta = ['#996dff', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#a8a8b3'];
             const configPadraoScales = {
                 x: { grid: { display: false }, ticks: { color: '#6e6e77', font: { size: 10 } } },
                 y: { grid: { color: '#22222a' }, ticks: { color: '#6e6e77', font: { size: 10 } } }
             };
 
-            // 1. Gráfico de Linha (Evolução)
+            // 1. Gráfico de Evolução Mensal
             try {
                 const chaves = Object.keys(mesesCronologicosObj).sort();
                 const labels = chaves.map(c => mesesCronologicosObj[c].labelExibicao);
@@ -547,10 +578,10 @@
                 });
             } catch (e) {}
 
-            // 2. Gráfico de Rosca (Subcategorias)
+            // 2. Gráfico de Categorias Reais (Novo Mapeamento oficial)
             try {
                 if (chartPizza) chartPizza.destroy();
-                chartPizza = new Chart(document.getElementById('graficoSubcategorias').getContext('2d'), {
+                chartPizza = new Chart(document.getElementById('graficoCategorias').getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: Object.keys(categoriasObj),
@@ -560,7 +591,7 @@
                 });
             } catch (e) {}
 
-            // 3. Gráfico de Barras (Centros de Custo)
+            // 3. Gráfico de Centros de Custo
             try {
                 if (chartBarras) chartBarras.destroy();
                 chartBarras = new Chart(document.getElementById('graficoCentroCusto').getContext('2d'), {
@@ -574,7 +605,6 @@
             } catch (e) {}
         }
     </script>
-    
     <script src="js/api.js"></script>
 </body>
 </html>
