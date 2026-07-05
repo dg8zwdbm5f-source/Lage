@@ -2,432 +2,579 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finanças App</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* --- Variáveis de Cores (Paleta Moderna / Escura) --- */
         :root {
-            --bg-principal: #09090a;
-            --bg-card: #121214;
-            --bg-input: #202024;
-            --border-color: #29292e;
-            --text-main: #e1e1e6;
-            --text-support: #a8a8b3;
-            --text-muted: #7c7c8a;
+            --bg-app: #0c0c0e;
+            --bg-surface: #16161a;
+            --bg-input: #22222a;
+            --border: #2c2c35;
+            --text-main: #f5f5f7;
+            --text-secondary: #9a9a1a;
+            --text-muted: #6e6e77;
             
-            --cor-gasto: #ffb800;
-            --cor-lancamentos: #996dff;
-            --cor-pago: #00b37e;
-            --cor-pendente: #f75a68;
+            --brand: #996dff;
+            --brand-glow: rgba(153, 109, 255, 0.15);
+            --success: #00b37e;
+            --danger: #f75a68;
+            --warning: #ffb800;
         }
 
-        /* --- Reset e Configurações Base --- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-principal);
+            background-color: var(--bg-app);
             color: var(--text-main);
-            padding-bottom: 60px;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* --- Header Elegante --- */
-        header {
-            background-color: var(--bg-card);
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        header .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 40px;
             display: flex;
-            align-items: center;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px; /* Limita ao tamanho perfeito de um smartphone */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- Header Minimalista --- */
+        header {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
         }
 
         header h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* --- Container Principal --- */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
+            letter-spacing: -0.02em;
         }
 
         #status-conexao {
-            padding: 16px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-align: center;
-            background: var(--bg-card);
-            border-radius: 8px;
-            margin-bottom: 24px;
-            border: 1px solid var(--border-color);
-            color: var(--text-support);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            background: var(--bg-surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            color: var(--warning);
         }
 
-        /* --- Seção de Filtros (Grid Fluido) --- */
-        .secao-filtros {
-            background-color: var(--bg-card);
+        /* --- Card de Saldo Principal --- */
+        .balance-card {
+            background: linear-gradient(135deg, #181424 0%, var(--bg-surface) 100%);
+            border: 1px solid rgba(153, 109, 255, 0.2);
+            border-radius: 20px;
             padding: 24px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 32px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
         }
 
-        .secao-filtros div {
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 120px;
+            height: 120px;
+            background: var(--brand);
+            filter: blur(60px);
+            opacity: 0.3;
+        }
+
+        .balance-card p {
+            font-size: 0.8rem;
+            color: #a8a8b3;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .balance-card h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+
+        .balance-sub {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .sub-item h4 {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .sub-item span {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .sub-item.pago span { color: var(--success); }
+        .sub-item.pendente span { color: var(--danger); }
+
+        /* --- Filtros / Pesquisa Mobile compactos --- */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 14px 16px 14px 44px;
+            border-radius: 14px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--brand);
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.95rem;
+            opacity: 0.6;
+        }
+
+        /* --- Seletor Quick-Tabs para os Gráficos --- */
+        .chart-tabs {
+            display: flex;
+            background: var(--bg-surface);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--bg-input);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .chart-display-wrapper {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 16px;
+            height: 260px;
+            position: relative;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .chart-container.active {
+            display: block;
+        }
+
+        /* --- Lista Estilo Extrato --- */
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .secao-filtros label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-        }
-
-        .secao-filtros select, .acoes-tabela input {
-            width: 100%;
-            background-color: var(--bg-input);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .secao-filtros select { cursor: pointer; }
-
-        .secao-filtros select:focus, .acoes-tabela input:focus {
-            border-color: var(--cor-lancamentos);
-            box-shadow: 0 0 0 2px rgba(153, 109, 255, 0.2);
-        }
-
-        /* --- Bloco Superior da Tabela (Busca e Limpar) --- */
-        .acoes-tabela {
+        .tx-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 14px 16px;
+            border-radius: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-            margin-top: 10px;
+            transition: transform 0.2s;
         }
 
-        .busca-container {
-            flex-grow: 1;
-            max-width: 400px;
-        }
-
-        /* Botão de Limpar Filtros */
-        .btn-limpar {
-            background-color: transparent;
-            color: var(--text-support);
-            border: 1px solid var(--border-color);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-            height: 46px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-        }
-
-        .btn-limpar:hover {
-            background-color: rgba(247, 90, 104, 0.1);
-            color: var(--cor-pendente);
-            border-color: var(--cor-pendente);
-        }
-
-        /* --- Cartões de Resumo --- */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            border-color: var(--text-muted);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-        }
-
-        .card:nth-child(1)::before { background-color: var(--cor-gasto); }
-        .card:nth-child(2)::before { background-color: var(--cor-lancamentos); }
-        .card:nth-child(3)::before { background-color: var(--cor-pago); }
-        .card:nth-child(4)::before { background-color: var(--cor-pendente); }
-
-        .card h3 {
-            font-size: 0.8rem;
-            color: var(--text-support);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-
-        .card h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        /* --- Container de Gráficos (Grid Adaptável de 1 a 3 colunas) --- */
-        .container-graficos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        @media (max-width: 500px) {
-            .container-graficos { grid-template-columns: 1fr; }
-            .acoes-tabela { flex-direction: column; align-items: stretch; }
-            .busca-container { max-width: 100%; }
-        }
-
-        .bloco-grafico {
-            background-color: var(--bg-card);
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            min-height: 360px;
+        .tx-left {
             display: flex;
             flex-direction: column;
+            gap: 4px;
+            max-width: 70%;
         }
 
-        .bloco-grafico h3 {
-            font-size: 0.85rem;
-            color: var(--text-support);
-            margin-bottom: 20px;
-            text-transform: uppercase;
+        .tx-title {
+            font-size: 0.95rem;
             font-weight: 600;
-            letter-spacing: 0.05em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .canvas-container {
-            position: relative;
-            flex-grow: 1;
-            height: 100%;
-            width: 100%;
-        }
-
-        /* --- Tabela de Lançamentos Moderna --- */
-        .container-tabela {
-            background-color: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow-x: auto;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        th {
-            background-color: #16161a;
-            color: var(--text-support);
-            font-weight: 600;
-            text-transform: uppercase;
+        .tx-meta {
             font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        td {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-weight: 400;
-        }
-
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #16161a; }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            display: inline-flex;
+            color: var(--text-muted);
+            display: flex;
+            gap: 8px;
             align-items: center;
-            justify-content: center;
         }
 
-        .status-badge.pago, .status-badge.efetuado { background-color: rgba(0, 179, 126, 0.1); color: #04d361; }
-        .status-badge.pendente { background-color: rgba(247, 90, 104, 0.1); color: #f75a68; }
+        .tx-tag {
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .tx-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tx-value {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .tx-status {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .tx-status.pago, .tx-status.efetuado { color: var(--success); }
+        .tx-status.pendente { color: var(--danger); }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-content">
-            <h1>📊 Dashboard Financeiro</h1>
-        </div>
-    </header>
+    <div class="app-container">
+        <header>
+            <h1>Finanças</h1>
+            <div id="status-conexao">Carregando...</div>
+        </header>
 
-    <main>
-        <div id="status-conexao">Buscando atualizações da planilha...</div>
-
-        <section class="secao-filtros">
-            <div>
-                <label>📅 Mês Vencimento</label>
-                <select id="filtroMes">
-                    <option value="todos">Todos os Meses</option>
-                </select>
-            </div>
-            <div>
-                <label>📆 Ano Vencimento</label>
-                <select id="filtroAno">
-                    <option value="todos">Todos os Anos</option>
-                </select>
-            </div>
-            <div>
-                <label>💳 Conta / Cartão</label>
-                <select id="filtroConta">
-                    <option value="todos">Todas as Contas</option>
-                </select>
-            </div>
-            <div>
-                <label>🚦 Status</label>
-                <select id="filtroStatus">
-                    <option value="todos">Todos os Status</option>
-                    <option value="pago">Pago</option>
-                    <option value="pendente">Pendente</option>
-                </select>
-            </div>
-        </section>
-
-        <section class="cards">
-            <div class="card">
-                <h3>Total Gasto</h3>
-                <h2 id="totalGasto">R$ 0,00</h2>
-            </div>
-            <div class="card">
-                <h3>Lançamentos</h3>
-                <h2 id="qtdeLancamentos">0</h2>
-            </div>
-            <div class="card">
-                <h3>Pago</h3>
-                <h2 id="totalPago">R$ 0,00</h2>
-            </div>
-            <div class="card">
-                <h3>Pendente</h3>
-                <h2 id="totalPendente">R$ 0,00</h2>
-            </div>
-        </section>
-
-        <section class="container-graficos">
-            <div class="bloco-grafico">
-                <h3>Gastos por Mês Vencimento</h3>
-                <div class="canvas-container">
-                    <canvas id="graficoMensal"></canvas>
+        <section class="balance-card">
+            <p>Total Geral Gasto</p>
+            <h2 id="totalGasto">R$ 0,00</h2>
+            
+            <div class="balance-sub">
+                <div class="sub-item pago">
+                    <h4>Efetuado</h4>
+                    <span id="totalPago">R$ 0,00</span>
                 </div>
-            </div>
-            <div class="bloco-grafico">
-                <h3>Gastos por Subcategoria</h3>
-                <div class="canvas-container">
-                    <canvas id="graficoSubcategorias"></canvas>
-                </div>
-            </div>
-            <div class="bloco-grafico">
-                <h3>Gastos por Centro de Custo</h3>
-                <div class="canvas-container">
-                    <canvas id="graficoCentroCusto"></canvas>
+                <div class="sub-item pendente">
+                    <h4>Pendente</h4>
+                    <span id="totalPendente">R$ 0,00</span>
                 </div>
             </div>
         </section>
 
-        <section class="acoes-tabela">
-            <div class="busca-container">
-                <input type="text" id="filtroTexto" placeholder="🔍 Buscar por fornecedor ou descrição...">
+        <section class="search-box">
+            <input type="text" id="filtroTexto" placeholder="Buscar estabelecimento ou descrição...">
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="chart-tabs">
+                <button class="tab-btn active" onclick="switchTab(0)">Evolução</button>
+                <button class="tab-btn" onclick="switchTab(1)">Categorias</button>
+                <button class="tab-btn" onclick="switchTab(2)">Centros</button>
             </div>
-            <button class="btn-limpar" id="btnLimparFiltros">Limpar Filtros</button>
+            
+            <div class="chart-display-wrapper">
+                <div class="chart-container active" id="c0"><canvas id="graficoMensal"></canvas></div>
+                <div class="chart-container" id="c1"><canvas id="graficoSubcategorias"></canvas></div>
+                <div class="chart-container" id="c2"><canvas id="graficoCentroCusto"></canvas></div>
+            </div>
         </section>
 
-        <section class="container-tabela">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data Compra</th>
-                        <th>Vencimento</th>
-                        <th>Fornecedor</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                        <th>Conta</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaCorpo"></tbody>
-            </table>
+        <section>
+            <div class="section-title">
+                <span>Histórico de Lançamentos</span>
+                <span id="qtdeLancamentos" style="font-size: 0.8rem; font-weight: normal;">0 itens</span>
+            </div>
+            <div class="transaction-list" id="tabelaCorpo">
+                </div>
         </section>
-    </main>
+    </div>
 
-    <script src="js/api.js?v=6.0"></script>
-    <script src="js/filtros.js?v=6.0"></script>
-    <script src="js/financeiro.js?v=6.0"></script>
+    <script>
+        // Variáveis do Estado do App
+        let chartPizza = null, chartBarras = null, chartMensal = null;
+        let dadosGlobais = [];
+        let filtroTextoAtual = "";
+
+        // Inicializador automático
+        document.addEventListener("DOMContentLoaded", async () => {
+            const statusDiv = document.getElementById("status-conexao");
+            
+            // Simulação/Checagem da existência do carregamento do api.js
+            if (typeof carregarDados !== "function") {
+                console.error("Função carregarDados() ausente.");
+                statusDiv.innerText = "❌ Erro API";
+                return;
+            }
+
+            try {
+                dadosGlobais = await carregarDados();
+                if (!dadosGlobais || dadosGlobais.length === 0) {
+                    statusDiv.innerText = "⚠ Vazio";
+                    return;
+                }
+                statusDiv.style.display = "none";
+                
+                // Monitoramento do input de busca mobile
+                document.getElementById("filtroTexto").addEventListener("input", (e) => {
+                    filtroTextoAtual = e.target.value.toLowerCase().trim();
+                    processarPainel(dadosGlobais);
+                });
+
+                processarPainel(dadosGlobais);
+            } catch (erro) {
+                console.error(erro);
+                statusDiv.innerText = "❌ Erro de Conexão";
+            }
+        });
+
+        // Alternador de Abas de Gráfico Mobile
+        function switchTab(index) {
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.chart-container').forEach((cont, i) => {
+                cont.classList.toggle('active', i === index);
+            });
+        }
+
+        // Processamento Central de Dados
+        function processarPainel(dadosParaExibir) {
+            let totalGasto = 0, totalPago = 0, totalPendente = 0;
+            const parcelasProcessadas = [];
+            const categoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
+            const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+            dadosParaExibir.forEach(item => {
+                const totalParcelas = parseInt(item.parcela) || 1;
+                const valorParcela = Number(item.valor) || 0;
+                
+                // Tratamento simplificado de datas nativas
+                let dataTexto = item.dataCompra ? item.dataCompra.toString().trim() : "";
+                let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
+
+                if (dataTexto) {
+                    if (dataTexto.includes("T")) dataTexto = dataTexto.split("T")[0];
+                    const partes = dataTexto.includes("-") ? dataTexto.split("-") : dataTexto.split("/");
+                    if (partes.length === 3) {
+                        if (dataTexto.includes("-")) {
+                            anoBase = parseInt(partes[0]); mesBase = parseInt(partes[1]) - 1; diaBase = parseInt(partes[2]);
+                        } else {
+                            diaBase = parseInt(partes[0]); mesBase = parseInt(partes[1]) - 1; anoBase = parseInt(partes[2]);
+                        }
+                    }
+                }
+
+                const objetoDataCompra = new Date(anoBase, mesBase, diaBase);
+                const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}`;
+
+                let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
+                let mesVencimentoBase = mesBase, anoVencimentoBase = anoBase;
+
+                if (vencimentoTexto) {
+                    if (vencimentoTexto.includes("T")) vencimentoTexto = vencimentoTexto.split("T")[0];
+                    const partesV = vencimentoTexto.includes("-") ? vencimentoTexto.split("-") : vencimentoTexto.split("/");
+                    if (partesV.length === 3) {
+                        if (vencimentoTexto.includes("-")) {
+                            anoVencimentoBase = parseInt(partesV[0]); mesVencimentoBase = parseInt(partesV[1]) - 1;
+                        } else {
+                            mesVencimentoBase = parseInt(partesV[1]) - 1; anoVencimentoBase = parseInt(partesV[2]);
+                        }
+                    }
+                } else {
+                    mesVencimentoBase = mesBase + 1;
+                }
+
+                for (let i = 0; i < totalParcelas; i++) {
+                    let dataParcela = new Date(anoVencimentoBase, mesVencimentoBase + i, 1);
+                    const mesNome = mesesAbreviados[dataParcela.getMonth()];
+                    const anoNum = dataParcela.getFullYear();
+                    const vencimentoFormatado = `${mesNome}/${String(anoNum).substring(2)}`;
+
+                    // Lógica local integrada de filtragem por texto
+                    const fornecedor = item.fornecedor ? item.fornecedor.toString().toLowerCase() : "";
+                    const descricao = item.descricao ? item.descricao.toString().toLowerCase() : "";
+                    if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descricao.includes(filtroTextoAtual)) {
+                        continue;
+                    }
+
+                    totalGasto += valorParcela;
+                    let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
+                    let statusBadgeTexto = item.status || "Pendente";
+                    
+                    if (i > 0) { statusParcela = "pendente"; statusBadgeTexto = "Pendente"; }
+
+                    if (statusParcela === "pago" || statusParcela === "efetuado") {
+                        totalPago += valorParcela;
+                    } else {
+                        totalPendente += valorParcela;
+                    }
+
+                    const descCustomizada = totalParcelas > 1 ? `${item.descricao || "Item"} (${i + 1}/${totalParcelas})` : (item.descricao || "-");
+                    const subcat = item.subcategoria && item.subcategoria.trim() !== "" ? item.subcategoria.trim() : "Outros";
+                    const centro = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
+                    
+                    categoriasObj[subcat] = (categoriasObj[subcat] || 0) + valorParcela;
+                    centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
+
+                    const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
+                    if (!mesesCronologicosObj[chaveCronologica]) {
+                        mesesCronologicosObj[chaveCronologica] = { labelExibicao: vencimentoFormatado, total: 0 };
+                    }
+                    mesesCronologicosObj[chaveCronologica].total += valorParcela;
+
+                    parcelasProcessadas.push({
+                        dataOrdenacao: objetoDataCompra,
+                        dataCompraStr: dataCompraFormatada,
+                        vencimentoStr: vencimentoFormatado,
+                        fornecedor: item.fornecedor || "Fornecedor",
+                        descricao: descCustomizada,
+                        valor: valorParcela,
+                        conta: item.conta || "Conta",
+                        statusClasse: statusParcela,
+                        statusTexto: statusBadgeTexto
+                    });
+                }
+            });
+
+            // Ordenar histórico por mais recente
+            parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
+
+            // Geração da lista compacta mobile (estilo banco)
+            const wrapperTabela = parcelasProcessadas.map(p => `
+                <div class="tx-item">
+                    <div class="tx-left">
+                        <span class="tx-title">${p.fornecedor}</span>
+                        <div class="tx-meta">
+                            <span>${p.dataCompraStr}</span>
+                            <span class="tx-tag">${p.vencimentoStr}</span>
+                            <span class="tx-tag">${p.conta}</span>
+                        </div>
+                    </div>
+                    <div class="tx-right">
+                        <span class="tx-value">R$ ${p.valor.toFixed(2).replace(".", ",")}</span>
+                        <span class="tx-status ${p.statusClasse}">${p.statusTexto}</span>
+                    </div>
+                </div>
+            `);
+
+            document.getElementById("tabelaCorpo").innerHTML = wrapperTabela.join("") || '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhum item encontrado</p>';
+            document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+            document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
+            document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+            document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+            atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj);
+        }
+
+        // Renderização Otimizada dos Gráficos com Cores Modernas
+        function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj) {
+            const coresPaleta = ['#996dff', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6'];
+            const configPadraoScales = {
+                x: { grid: { display: false }, ticks: { color: '#6e6e77', font: { size: 10 } } },
+                y: { grid: { color: '#22222a' }, ticks: { color: '#6e6e77', font: { size: 10 } } }
+            };
+
+            // 1. Gráfico de Linha (Evolução)
+            try {
+                const chaves = Object.keys(mesesCronologicosObj).sort();
+                const labels = chaves.map(c => mesesCronologicosObj[c].labelExibicao);
+                const valores = chaves.map(c => mesesCronologicosObj[c].total);
+
+                if (chartMensal) chartMensal.destroy();
+                chartMensal = new Chart(document.getElementById('graficoMensal').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: valores, borderColor: '#996dff', backgroundColor: 'rgba(153, 109, 255, 0.08)', borderWidth: 2.5, fill: true, tension: 0.3, pointRadius: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: configPadraoScales }
+                });
+            } catch (e) {}
+
+            // 2. Gráfico de Rosca (Subcategorias)
+            try {
+                if (chartPizza) chartPizza.destroy();
+                chartPizza = new Chart(document.getElementById('graficoSubcategorias').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categoriasObj),
+                        datasets: [{ data: Object.values(categoriasObj), backgroundColor: coresPaleta, borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#c5c5d0', font: { size: 10 }, boxWidth: 10 } } } }
+                });
+            } catch (e) {}
+
+            // 3. Gráfico de Barras (Centros de Custo)
+            try {
+                if (chartBarras) chartBarras.destroy();
+                chartBarras = new Chart(document.getElementById('graficoCentroCusto').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(centrosObj),
+                        datasets: [{ data: Object.values(centrosObj), backgroundColor: '#00b37e', borderRadius: 6, barThickness: 16 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: configPadraoScales }
+                });
+            } catch (e) {}
+        }
+    </script>
+    
+    <script src="js/api.js"></script>
 </body>
 </html>
