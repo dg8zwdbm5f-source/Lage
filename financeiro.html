@@ -332,10 +332,9 @@
     </div>
 
     <script>
-        // CONEXÃO DIRETA COM A PLANILHA (SEM DEPENDER DO API.JS EXTERNO)
+        // CONEXÃO DIRETA COM A PLANILHA UTILIZANDO A URL OFICIAL RE PASSADA
         async function carregarDados() {
-            // SUBSTITUA ESTE LINK ABAIXO PELO SEU LINK DO WEB APP TERMINADO EM /exec
-            const URL_DIRETA = "COLE_AQUI_O_LINK_DA_SUA_IMPLANTACAO_TERMINADO_EM_EXEC"; 
+            const URL_DIRETA = "https://script.google.com/macros/s/AKfycbwBBPBmPOy-XMBUaP0JsvY2u5qh6PLdM6Y7B0iZHLmRGbZdLx6rmTexVELTKJYySB15/exec"; 
             
             const resposta = await fetch(URL_DIRETA);
             return await resposta.json();
@@ -384,7 +383,6 @@
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
                 
-                // Mapeia .categoria direto do JSON validado
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
 
                 let dataTexto = (item.dataCompra || "").toString().trim();
