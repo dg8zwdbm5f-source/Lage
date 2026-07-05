@@ -1,5 +1,6 @@
 let chartPizza = null;
 let chartBarras = null;
+let chartMensal = null; // Novo gráfico de evolução mensal
 let dadosGlobais = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -41,6 +42,8 @@ function processarPainel(dadosParaExibir) {
     const parcelasProcessadas = [];
     const categoriesObj = {};
     const centrosObj = {};
+    const mesesCronologicosObj = {}; // Estrutura para agrupar despesas por data real de vencimento
+    
     const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     dadosParaExibir.forEach(item => {
@@ -120,14 +123,11 @@ function processarPainel(dadosParaExibir) {
             let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
             let statusBadgeTexto = item.status || "Pendente";
             
-            // Parcelas futuras (i > 0) nascem obrigatoriamente como pendentes
             if (i > 0) {
                 statusParcela = "pendente";
                 statusBadgeTexto = "Pendente";
             }
 
-            // --- CORREÇÃO DA SOMA LOGÍCA DOS CARDS ---
-            // Aceita "pago" ou "efetuado" vindo do Sheets
             if (statusParcela === "pago" || statusParcela === "efetuado") {
                 totalPago += valorParcela;
             } else {
@@ -143,6 +143,13 @@ function processarPainel(dadosParaExibir) {
             
             categoriesObj[subcategoria] = (categoriesObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
+
+            // Chave cronológica lógica estável para ordenação perfeita do gráfico de evolução (Ex: "2026-06")
+            const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
+            if (!mesesCronologicosObj[chaveCronologica]) {
+                mesesCronologicosObj[chaveCronologica] = { labelExibicao: vencimentoFormatado, total: 0 };
+            }
+            mesesCronologicosObj[chaveCronologica].total += valorParcela;
 
             parcelasProcessadas.push({
                 dataOrdenacao: objetoDataCompra,
@@ -160,7 +167,7 @@ function processarPainel(dadosParaExibir) {
 
     parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
 
-    const linhasTabela = parcelasProcessadas.map(p => `
+    const linesTabela = parcelasProcessadas.map(p => `
         <tr>
             <td>${p.dataCompraStr}</td>
             <td><strong>${p.vencimentoStr}</strong></td>
@@ -172,18 +179,55 @@ function processarPainel(dadosParaExibir) {
         </tr>
     `);
 
-    document.getElementById("tabelaCorpo").innerHTML = linhasTabela.join("");
+    document.getElementById("tabelaCorpo").innerHTML = linesTabela.join("");
     document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-    document.getElementById("qtdeLancamentos").innerText = linhasTabela.length;
+    document.getElementById("qtdeLancamentos").innerText = linesTabela.length;
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    atualizarGraficosPainel(categoriesObj, centrosObj);
+    atualizarGraficosPainel(categoriesObj, centrosObj, mesesCronologicosObj);
 }
 
-function atualizarGraficosPainel(categoriasObj, centrosObj) {
+function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj) {
     const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
+    // --- NOVO GRÁFICO: EVOLUÇÃO MENSAL CRONOLÓGICA ---
+    try {
+        // Ordena as chaves cronológicas ("2026-05", "2026-06", etc.) de forma crescente para o gráfico fazer sentido temporal
+        const chavesOrdenadas = Object.keys(mesesCronologicosObj).sort();
+        const labelsMensais = chavesOrdenadas.map(chave => mesesCronologicosObj[chave].labelExibicao);
+        const valoresMensais = chavesOrdenadas.map(chave => mesesCronologicosObj[chave].total);
+
+        const ctxMensal = document.getElementById('graficoMensal').getContext('2d');
+        if (chartMensal) chartMensal.destroy();
+        chartMensal = new Chart(ctxMensal, {
+            type: 'line', // Estilo de linha contínuo e elegante
+            data: {
+                labels: labelsMensais,
+                datasets: [{
+                    label: 'Total Gasto',
+                    data: valoresMensais,
+                    borderColor: '#996dff',
+                    backgroundColor: 'rgba(153, 109, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3, // Deixa as curvas suaves nas pontas
+                    pointBackgroundColor: '#996dff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#c4c4cc' } },
+                    y: { grid: { color: '#29292e' }, ticks: { color: '#c4c4cc' } }
+                }
+            }
+        });
+    } catch (err) { console.error("Erro no gráfico mensal:", err); }
+
+    // --- GRÁFICO 2: SUBCATEGORIAS ---
     try {
         const ctxPizza = document.getElementById('graficoSubcategorias').getContext('2d');
         if (chartPizza) chartPizza.destroy();
@@ -197,6 +241,7 @@ function atualizarGraficosPainel(categoriasObj, centrosObj) {
         });
     } catch (err) { console.error(err); }
 
+    // --- GRÁFICO 3: CENTRO DE CUSTO ---
     try {
         const ctxBarras = document.getElementById('graficoCentroCusto').getContext('2d');
         if (chartBarras) chartBarras.destroy();
@@ -204,7 +249,7 @@ function atualizarGraficosPainel(categoriasObj, centrosObj) {
             type: 'bar',
             data: {
                 labels: Object.keys(centrosObj),
-                datasets: [{ data: Object.values(centrosObj), backgroundColor: '#633bbc', borderRadius: 4 }]
+                datasets: [{ data: Object.values(centrosObj), backgroundColor: '#00b37e', borderRadius: 4 }]
             },
             options: {
                 responsive: true,
