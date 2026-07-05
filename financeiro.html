@@ -111,9 +111,6 @@
         }
 
         .balance-sub {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
             border-top: 1px solid var(--border);
             padding-top: 16px;
         }
@@ -129,7 +126,6 @@
             font-weight: 600;
         }
         .sub-item.pago span { color: var(--success); }
-        .sub-item.orcamento span { color: var(--warning); }
 
         .filter-group {
             display: flex;
@@ -328,10 +324,6 @@
                 <div class="sub-item pago">
                     <h4>Pago / Efetuado</h4>
                     <span id="totalPago">R$ 0,00</span>
-                </div>
-                <div class="sub-item orcamento">
-                    <h4>Tipo de Orçamento</h4>
-                    <span id="totalOrcamento">-</span>
                 </div>
             </div>
         </section>
@@ -574,12 +566,14 @@
 
             parcelasProcessadas.sort((a, b) => b.dataOrdenacao - a.dataOrdenacao);
 
+            // ALTERAÇÃO: TÍTULO AGORA É A DESCRIÇÃO, E O FORNECEDOR PASSOU PARA A LISTA DE TAGS INFERIOR
             const wrapperTabela = parcelasProcessadas.map(p => `
                 <div class="tx-item">
                     <div class="tx-left">
-                        <span class="tx-title">${p.fornecedor}</span>
+                        <span class="tx-title">${p.descricao}</span>
                         <div class="tx-meta">
                             <span>${p.dataCompraStr}</span>
+                            <span class="tx-tag" style="background: rgba(153, 109, 255, 0.15); color: #b794ff;">${p.fornecedor}</span>
                             <span class="tx-tag">${p.categoria}</span>
                             <span class="tx-tag">${p.conta}</span>
                         </div>
@@ -595,11 +589,6 @@
             document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
             document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-            
-            if (dadosParaExibir.length > 0) {
-               const valido = dadosParaExibir.find(d => d.dataCompra !== "Data Compra");
-               document.getElementById("totalOrcamento").innerText = (valido && valido.orcamento) ? valido.orcamento : "-";
-            }
 
             atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj, orcamentosObj);
         }
@@ -651,7 +640,6 @@
                 });
             } catch (e) {}
 
-            // MODIFICAÇÃO: GRÁFICO DE BARRAS HORIZONTAIS EMPILHADAS (TETO 8900)
             try {
                 if (chartOrcamentos) chartOrcamentos.destroy();
                 
@@ -659,7 +647,6 @@
                 const datasetsConfig = [];
                 let somaAtualOrcamentos = 0;
                 
-                // Cria um dataset para cada tipo de orçamento encontrado
                 Object.keys(orcamentosObj).forEach((tipo, index) => {
                     const valor = orcamentosObj[tipo];
                     somaAtualOrcamentos += valor;
@@ -672,12 +659,11 @@
                     });
                 });
                 
-                // Calcula se ainda resta saldo para atingir os 8900
                 if (somaAtualOrcamentos < VALOR_TETO) {
                     datasetsConfig.push({
                         label: 'Saldo Disponível',
                         data: [VALOR_TETO - somaAtualOrcamentos],
-                        backgroundColor: '#2c2c35', // Cor cinza escura discreta
+                        backgroundColor: '#2c2c35', 
                         barThickness: 35
                     });
                 }
@@ -689,7 +675,7 @@
                         datasets: datasetsConfig
                     },
                     options: {
-                        indexAxis: 'y', // Deixa a barra horizontal
+                        indexAxis: 'y', 
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
@@ -711,7 +697,7 @@
                         scales: {
                             x: {
                                 stacked: true,
-                                max: Math.max(VALOR_TETO, somaAtualOrcamentos), // Se estourar os 8900, a barra expande
+                                max: Math.max(VALOR_TETO, somaAtualOrcamentos), 
                                 grid: { color: '#22222a' },
                                 ticks: {
                                     color: '#6e6e77',
@@ -723,7 +709,7 @@
                             },
                             y: {
                                 stacked: true,
-                                display: false // Esconde o label lateral para ganhar espaço
+                                display: false 
                             }
                         }
                     }
