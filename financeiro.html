@@ -332,12 +332,14 @@
     </div>
 
     <script>
-        // CONEXÃO DIRETA COM A PLANILHA (SEM PRECISAR DE API.JS EXTERNO)
-        async function carregarDados() {
-            const URL_DIRETA = "https://script.google.com/macros/s/AKfycbxN55l50E9uas4fxJ8lrCflpDctpiQcOzCmKZtzf2g/dev"; 
-            const resposta = await fetch(URL_DIRETA);
-            return await resposta.json();
-        }
+    // CONEXÃO DIRETA COM A PLANILHA (SEM PRECISAR DE API.JS EXTERNO)
+async function carregarDados() {
+    // COLE O SEU LINK TERMINADO EM /exec AQUI NO LOGAR DO /dev:
+    const URL_DIRETA = "COLE_AQUI_O_SEU_LINK_TERMINADO_EM_EXEC"; 
+    
+    const resposta = await fetch(URL_DIRETA);
+    return await resposta.json();
+}
 
         let chartPizza = null, chartBarras = null, chartMensal = null;
         let dadosGlobais = [];
