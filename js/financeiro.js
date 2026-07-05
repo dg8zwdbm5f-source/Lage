@@ -1,6 +1,6 @@
 let chartPizza = null;
 let chartBarras = null;
-let chartMensal = null; // Novo gráfico de evolução mensal
+let chartMensal = null; 
 let dadosGlobais = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -40,9 +40,9 @@ function processarPainel(dadosParaExibir) {
     let totalPendente = 0;
     
     const parcelasProcessadas = [];
-    const categoriesObj = {};
+    const categoriasObj = {}; // Corrigido para português para alinhar com a função abaixo
     const centrosObj = {};
-    const mesesCronologicosObj = {}; // Estrutura para agrupar despesas por data real de vencimento
+    const mesesCronologicosObj = {}; 
     
     const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -141,10 +141,9 @@ function processarPainel(dadosParaExibir) {
             const subcategoria = item.subcategoria && item.subcategoria.trim() !== "" ? item.subcategoria.trim() : "Outros";
             const centroCusto = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
             
-            categoriesObj[subcategoria] = (categoriesObj[subcategoria] || 0) + valorParcela;
+            categoriasObj[subcategoria] = (categoriasObj[subcategoria] || 0) + valorParcela;
             centrosObj[centroCusto] = (centrosObj[centroCusto] || 0) + valorParcela;
 
-            // Chave cronológica lógica estável para ordenação perfeita do gráfico de evolução (Ex: "2026-06")
             const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
             if (!mesesCronologicosObj[chaveCronologica]) {
                 mesesCronologicosObj[chaveCronologica] = { labelExibicao: vencimentoFormatado, total: 0 };
@@ -185,15 +184,15 @@ function processarPainel(dadosParaExibir) {
     document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
     document.getElementById("totalPendente").innerText = "R$ " + totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-    atualizarGraficosPainel(categoriesObj, centrosObj, mesesCronologicosObj);
+    // Corrigido o primeiro parâmetro de categoriesObj para categoriasObj
+    atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj);
 }
 
 function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj) {
     const coresDinamicas = ['#633bbc', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#50fa7b', '#ffb86c'];
 
-    // --- NOVO GRÁFICO: EVOLUÇÃO MENSAL CRONOLÓGICA ---
+    // --- GRÁFICO 1: EVOLUÇÃO MENSAL ---
     try {
-        // Ordena as chaves cronológicas ("2026-05", "2026-06", etc.) de forma crescente para o gráfico fazer sentido temporal
         const chavesOrdenadas = Object.keys(mesesCronologicosObj).sort();
         const labelsMensais = chavesOrdenadas.map(chave => mesesCronologicosObj[chave].labelExibicao);
         const valoresMensais = chavesOrdenadas.map(chave => mesesCronologicosObj[chave].total);
@@ -201,7 +200,7 @@ function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj
         const ctxMensal = document.getElementById('graficoMensal').getContext('2d');
         if (chartMensal) chartMensal.destroy();
         chartMensal = new Chart(ctxMensal, {
-            type: 'line', // Estilo de linha contínuo e elegante
+            type: 'line', 
             data: {
                 labels: labelsMensais,
                 datasets: [{
@@ -211,7 +210,7 @@ function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj
                     backgroundColor: 'rgba(153, 109, 255, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.3, // Deixa as curvas suaves nas pontas
+                    tension: 0.3, 
                     pointBackgroundColor: '#996dff'
                 }]
             },
