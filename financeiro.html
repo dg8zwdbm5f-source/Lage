@@ -6,7 +6,7 @@
     <title>Finanças App</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -321,12 +321,12 @@
                     <span id="totalPago">R$ 0,00</span>
                 </div>
                 <div class="sub-item orcamento">
-                    <h4>Orçamento Total</h4>
-                    <span id="totalOrcamento">R$ 0,00</span>
+                    <h4>Tipo de Orçamento</h4>
+                    <span id="totalOrcamento">-</span>
                 </div>
             </div>
 
-            <div class="budget-progress-container">
+            <div class="budget-progress-container" style="display:none;">
                 <div class="budget-progress-header">
                     <span>Uso do Orçamento</span>
                     <span id="budgetPercent">0%</span>
@@ -398,47 +398,26 @@
             }
         });
 
-        // Função auxiliar para ler chaves do objeto sem se importar com acentos ou maiúsculas
-        function obterValorFlexivel(obj, listaVariacoes, valorPadrao = 0) {
-            for (let variacao of listaVariacoes) {
-                if (obj[variacao] !== undefined && obj[variacao] !== null) {
-                    return obj[variacao];
-                }
-            }
-            // Procura alternativa limpando tudo se não achou direto
-            const chaves = Object.keys(obj);
-            for (let chave of chaves) {
-                const chaveLimpa = chave.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                for (let v of listaVariacoes) {
-                    const vLimpa = v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    if (chaveLimpa === vLimpa) return obj[chave];
-                }
-            }
-            return valorPadrao;
-        }
-
         function switchTab(index) {
             document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
             document.querySelectorAll('.chart-container').forEach((cont, i) => cont.classList.toggle('active', i === index));
         }
 
         function processarPainel(dadosParaExibir) {
-            let totalGasto = 0, totalPago = 0, totalOrcamento = 0;
+            let totalGasto = 0, totalPago = 0;
             const parcelasProcessadas = [];
             const canvasCategoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
             dadosParaExibir.forEach(item => {
-                const totalParcelas = parseInt(obterValorFlexivel(item, ['parcela', 'Parcela'], 1)) || 1;
-                const valorParcela = Number(obterValorFlexivel(item, ['valor', 'Valor'], 0)) || 0;
+                const totalParcelas = parseInt(item.parcela) || 1;
+                const valorParcela = Number(item.valor) || 0;
                 
-                // Mapeador flexível para capturar Categoria e Orçamento independente de acento/caixa
-                const categoriaRealRaw = obterValorFlexivel(item, ['categoria', 'Categoria', 'CATEGORIA'], 'Outros');
-                const categoriaReal = (categoriaRealRaw && typeof categoriaRealRaw === "string" && categoriaRealRaw.trim() !== "") ? categoriaRealRaw.trim() : "Outros";
-                
-                const valorOrcamento = Number(obterValorFlexivel(item, ['orcamento', 'Orcamento', 'Orçamento', 'ORÇAMENTO'], 0)) || 0;
+                // Mapeia diretamente o campo correto enviado pelo Apps Script estruturado pelas colunas
+                const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
+                const orcamentoTexto = item.orcamento && item.orcamento.toString().trim() !== "" ? item.orcamento.trim() : "-";
 
-                let dataTexto = obterValorFlexivel(item, ['dataCompra', 'DataCompra', 'data', 'Data'], "").toString().trim();
+                let dataTexto = (item.dataCompra || item.data || "").toString().trim();
                 let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
 
                 if (dataTexto) {
@@ -456,7 +435,7 @@
                 const objetoDataCompra = new Date(anoBase, mesBase, diaBase);
                 const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}`;
 
-                let vencimentoTexto = obterValorFlexivel(item, ['vencimento', 'Vencimento', 'venc', 'Venc'], "").toString().trim();
+                let vencimentoTexto = (item.vencimento || "").toString().trim();
                 let mesVencimentoBase = mesBase, anoVencimentoBase = anoBase;
 
                 if (vencimentoTexto) {
@@ -479,8 +458,8 @@
                     const anoNum = dataParcela.getFullYear();
                     const vencimentoFormatado = `${mesNome}/${String(anoNum).substring(2)}`;
 
-                    const fornecedor = obterValorFlexivel(item, ['fornecedor', 'Fornecedor'], "-").toString().toLowerCase();
-                    const descText = obterValorFlexivel(item, ['descricao', 'Descricao', 'Descrição'], "-").toString().toLowerCase();
+                    const fornecedor = (item.fornecedor || "-").toString().toLowerCase();
+                    const descText = (item.descricao || "-").toString().toLowerCase();
                     const catText = categoriaReal.toLowerCase();
                     
                     if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual)) {
@@ -488,22 +467,20 @@
                     }
 
                     totalGasto += valorParcela;
-                    totalOrcamento += (valorOrcamento / totalParcelas);
 
-                    let statusParcela = obterValorFlexivel(item, ['status', 'Status'], "pendente").toString().trim().toLowerCase();
-                    let statusBadgeTexto = obterValorFlexivel(item, ['status', 'Status'], "Pendente");
+                    let statusParcela = (item.status || "pendente").toString().trim().toLowerCase();
+                    let statusBadgeTexto = item.status || "Pendente";
                     if (i > 0) { statusParcela = "pendente"; statusBadgeTexto = "Pendente"; }
 
                     if (statusParcela === "pago" || statusParcela === "efetuado") {
                         totalPago += valorParcela;
                     }
 
-                    const descOriginal = obterValorFlexivel(item, ['descricao', 'Descricao', 'Descrição'], "Item");
+                    const descOriginal = item.descricao || "Item";
                     const descCustomizada = totalParcelas > 1 ? `${descOriginal} (${i + 1}/${totalParcelas})` : descOriginal;
                     
-                    const centroCustoRaw = obterValorFlexivel(item, ['centroCusto', 'CentroCusto', 'centro', 'Centro de Custo'], "Geral");
-                    const centro = (centroCustoRaw && typeof centroCustoRaw === "string" && centroCustoRaw.trim() !== "") ? centroCustoRaw.trim() : "Geral";
-                    const conta = obterValorFlexivel(item, ['conta', 'Conta'], "-");
+                    const centro = item.centroCusto && item.centroCusto.toString().trim() !== "" ? item.centroCusto.trim() : "Geral";
+                    const conta = item.conta || "-";
                     
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
@@ -518,7 +495,7 @@
                         dataOrdenacao: objetoDataCompra,
                         dataCompraStr: dataCompraFormatada,
                         vencimentoStr: vencimentoFormatado,
-                        fornecedor: obterValorFlexivel(item, ['fornecedor', 'Fornecedor'], "-"),
+                        fornecedor: item.fornecedor || "-",
                         descricao: descCustomizada,
                         valor: valorParcela,
                         categoria: categoriaReal,
@@ -552,18 +529,10 @@
             document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
             document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-            document.getElementById("totalOrcamento").innerText = "R$ " + totalOrcamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-
-            const porcentagemUso = totalOrcamento > 0 ? Math.min(Math.round((totalGasto / totalOrcamento) * 100), 100) : 0;
-            document.getElementById("budgetPercent").innerText = porcentagemUso + "%";
-            document.getElementById("progressBarFill").style.width = porcentagemUso + "%";
-
-            if(porcentagemUso >= 100) {
-                document.getElementById("progressBarFill").style.backgroundColor = "var(--danger)";
-            } else if (porcentagemUso >= 80) {
-                document.getElementById("progressBarFill").style.backgroundColor = "var(--warning)";
-            } else {
-                document.getElementById("progressBarFill").style.backgroundColor = "var(--brand)";
+            
+            // Exibe a classificação do último orçamento inserido ou mantém dinâmico
+            if (dadosParaExibir.length > 0) {
+               document.getElementById("totalOrcamento").innerText = dadosParaExibir[0].orcamento || "-";
             }
 
             atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj);
