@@ -131,7 +131,6 @@
         .sub-item.pago span { color: var(--success); }
         .sub-item.orcamento span { color: var(--warning); }
 
-        /* Estilização da área de filtros agrupados */
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -206,6 +205,7 @@
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
+            text-align: center;
         }
 
         .tab-btn.active {
@@ -367,12 +367,14 @@
                 <button class="tab-btn active" onclick="switchTab(0)">Evolução</button>
                 <button class="tab-btn" onclick="switchTab(1)">Categorias</button>
                 <button class="tab-btn" onclick="switchTab(2)">Centros</button>
+                <button class="tab-btn" onclick="switchTab(3)">Orçamentos</button>
             </div>
             
             <div class="chart-display-wrapper">
                 <div class="chart-container active" id="c0"><canvas id="graficoMensal"></canvas></div>
                 <div class="chart-container" id="c1"><canvas id="graficoCategorias"></canvas></div>
                 <div class="chart-container" id="c2"><canvas id="graficoCentroCusto"></canvas></div>
+                <div class="chart-container" id="c3"><canvas id="graficoOrcamentos"></canvas></div>
             </div>
         </section>
 
@@ -386,14 +388,13 @@
     </div>
 
     <script>
-        // CONEXÃO DIRETA COM A PLANILHA UTILIZANDO A URL OFICIAL RE PASSADA
         async function carregarDados() {
             const URL_DIRETA = "https://script.google.com/macros/s/AKfycbwBBPBmPOy-XMBUaP0JsvY2u5qh6PLdM6Y7B0iZHLmRGbZdLx6rmTexVELTKJYySB15/exec"; 
             const resposta = await fetch(URL_DIRETA);
             return await resposta.json();
         }
 
-        let chartPizza = null, chartBarras = null, chartMensal = null;
+        let chartPizza = null, chartBarras = null, chartMensal = null, chartOrcamentos = null;
         let dadosGlobais = [];
         let filtroTextoAtual = "";
         let filtroAnoAtual = "todos";
@@ -409,10 +410,8 @@
                 }
                 statusDiv.style.display = "none";
                 
-                // Mapeia e preenche os anos existentes de forma automática
                 preencherFiltrosDinamicos(dadosGlobais);
 
-                // Listeners dos Filtros
                 document.getElementById("filtroTexto").addEventListener("input", (e) => {
                     filtroTextoAtual = e.target.value.toLowerCase().trim();
                     processarPainel(dadosGlobais);
@@ -467,7 +466,7 @@
         function processarPainel(dadosParaExibir) {
             let totalGasto = 0, totalPago = 0;
             const parcelasProcessadas = [];
-            const canvasCategoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
+            const canvasCategoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {}, orcamentosObj = {};
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
             dadosParaExibir.forEach(item => {
@@ -476,6 +475,9 @@
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
+                
+                // Mapeia o tipo de orçamento
+                const orcamentoReal = item.orcamento && item.orcamento.toString().trim() !== "" ? item.orcamento.trim() : "Não Informado";
 
                 let dataTexto = (item.dataCompra || "").toString().trim();
                 let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
@@ -518,21 +520,15 @@
                     const anoNum = dataParcela.getFullYear();
                     const vencimentoFormatado = `${mesesAbreviados[mesIndexNum]}/${String(anoNum).substring(2)}`;
 
-                    // FILTRO 1: Ano do Vencimento
-                    if (filtroAnoAtual !== "todos" && anoNum.toString() !== filtroAnoAtual) {
-                        continue;
-                    }
+                    if (filtroAnoAtual !== "todos" && anoNum.toString() !== filtroAnoAtual) continue;
+                    if (filtroMesAtual !== "todos" && mesIndexNum.toString() !== filtroMesAtual) continue;
 
-                    // FILTRO 2: Mês do Vencimento
-                    if (filtroMesAtual !== "todos" && mesIndexNum.toString() !== filtroMesAtual) {
-                        continue;
-                    }
-
-                    // FILTRO 3: Busca Textual
                     const fornecedor = (item.fornecedor || "-").toString().toLowerCase();
                     const descText = (item.descricao || "-").toString().toLowerCase();
                     const catText = categoriaReal.toLowerCase();
-                    if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual)) {
+                    const orcText = orcamentoReal.toLowerCase();
+                    
+                    if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual) && !orcText.includes(filtroTextoAtual)) {
                         continue;
                     }
 
@@ -554,6 +550,9 @@
                     
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
+                    
+                    // Somando os valores agrupados por tipo de Orçamento
+                    orcamentosObj[orcamentoReal] = (orcamentosObj[orcamentoReal] || 0) + valorParcela;
 
                     const chaveCronologica = `${anoNum}-${String(mesIndexNum + 1).padStart(2, '0')}`;
                     if (!mesesCronologicosObj[chaveCronologica]) {
@@ -605,10 +604,10 @@
                document.getElementById("totalOrcamento").innerText = (valido && valido.orcamento) ? valido.orcamento : "-";
             }
 
-            atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj);
+            atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj, orcamentosObj);
         }
 
-        function atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj) {
+        function atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj, orcamentosObj) {
             const coresPaleta = ['#996dff', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#a8a8b3'];
             const configPadraoScales = {
                 x: { grid: { display: false }, ticks: { color: '#6e6e77', font: { size: 10 } } },
@@ -652,6 +651,19 @@
                         datasets: [{ data: Object.values(centrosObj), backgroundColor: '#00b37e', borderRadius: 6, barThickness: 16 }]
                     },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: configPadraoScales }
+                });
+            } catch (e) {}
+
+            // RENDERIZAÇÃO DO NOVO GRÁFICO DE TIPO DE ORÇAMENTO (TIPO ROSCA/DOUGHNUT)
+            try {
+                if (chartOrcamentos) chartOrcamentos.destroy();
+                chartOrcamentos = new Chart(document.getElementById('graficoOrcamentos').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(orcamentosObj),
+                        datasets: [{ data: Object.values(orcamentosObj), backgroundColor: ['#ffb800', '#ff79c6', '#00d2df', '#996dff', '#a8a8b3'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#c5c5d0', font: { size: 10 }, boxWidth: 10 } } } }
                 });
             } catch (e) {}
         }
