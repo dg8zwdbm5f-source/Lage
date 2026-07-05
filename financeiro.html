@@ -131,8 +131,16 @@
         .sub-item.pago span { color: var(--success); }
         .sub-item.orcamento span { color: var(--warning); }
 
+        /* Estilização da área de filtros agrupados */
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         .search-box {
             position: relative;
+            width: 100%;
         }
 
         .search-box input {
@@ -154,6 +162,30 @@
             transform: translateY(-50%);
             font-size: 0.95rem;
             opacity: 0.6;
+        }
+
+        .select-filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .select-filters select {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
         }
 
         .chart-tabs {
@@ -304,8 +336,30 @@
             </div>
         </section>
 
-        <section class="search-box">
-            <input type="text" id="filtroTexto" placeholder="Buscar por categoria, fornecedor...">
+        <section class="filter-group">
+            <div class="search-box">
+                <input type="text" id="filtroTexto" placeholder="Buscar por categoria, fornecedor...">
+            </div>
+            <div class="select-filters">
+                <select id="filtroAno">
+                    <option value="todos">Todos os Anos</option>
+                </select>
+                <select id="filtroMes">
+                    <option value="todos">Todos os Meses</option>
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+            </div>
         </section>
 
         <section style="display: flex; flex-direction: column; gap: 10px;">
@@ -335,7 +389,6 @@
         // CONEXÃO DIRETA COM A PLANILHA UTILIZANDO A URL OFICIAL RE PASSADA
         async function carregarDados() {
             const URL_DIRETA = "https://script.google.com/macros/s/AKfycbwBBPBmPOy-XMBUaP0JsvY2u5qh6PLdM6Y7B0iZHLmRGbZdLx6rmTexVELTKJYySB15/exec"; 
-            
             const resposta = await fetch(URL_DIRETA);
             return await resposta.json();
         }
@@ -343,6 +396,8 @@
         let chartPizza = null, chartBarras = null, chartMensal = null;
         let dadosGlobais = [];
         let filtroTextoAtual = "";
+        let filtroAnoAtual = "todos";
+        let filtroMesAtual = "todos";
 
         document.addEventListener("DOMContentLoaded", async () => {
             const statusDiv = document.getElementById("status-conexao");
@@ -354,8 +409,22 @@
                 }
                 statusDiv.style.display = "none";
                 
+                // Mapeia e preenche os anos existentes de forma automática
+                preencherFiltrosDinamicos(dadosGlobais);
+
+                // Listeners dos Filtros
                 document.getElementById("filtroTexto").addEventListener("input", (e) => {
                     filtroTextoAtual = e.target.value.toLowerCase().trim();
+                    processarPainel(dadosGlobais);
+                });
+
+                document.getElementById("filtroAno").addEventListener("change", (e) => {
+                    filtroAnoAtual = e.target.value;
+                    processarPainel(dadosGlobais);
+                });
+
+                document.getElementById("filtroMes").addEventListener("change", (e) => {
+                    filtroMesAtual = e.target.value;
                     processarPainel(dadosGlobais);
                 });
 
@@ -365,6 +434,30 @@
                 statusDiv.innerText = "❌ Erro de Conexão";
             }
         });
+
+        function preencherFiltrosDinamicos(dados) {
+            const anosDefinidos = new Set();
+            
+            dados.forEach(item => {
+                if (!item.vencimento || item.vencimento === "Vencimento") return;
+                let vTexto = item.vencimento.toString().trim();
+                if (vTexto.includes("T")) vTexto = vTexto.split("T")[0];
+                const partes = vTexto.includes("-") ? vTexto.split("-") : vTexto.split("/");
+                
+                if (partes.length === 3) {
+                    const ano = vTexto.includes("-") ? parseInt(partes[0]) : parseInt(partes[2]);
+                    if (!isNaN(ano)) anosDefinidos.add(ano);
+                }
+            });
+
+            const selectAno = document.getElementById("filtroAno");
+            Array.from(anosDefinidos).sort((a, b) => b - a).forEach(ano => {
+                const opt = document.createElement("option");
+                opt.value = ano;
+                opt.textContent = ano;
+                selectAno.appendChild(opt);
+            });
+        }
 
         function switchTab(index) {
             document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
@@ -382,7 +475,6 @@
 
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
-                
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
 
                 let dataTexto = (item.dataCompra || "").toString().trim();
@@ -422,14 +514,24 @@
 
                 for (let i = 0; i < totalParcelas; i++) {
                     let dataParcela = new Date(anoVencimentoBase, mesVencimentoBase + i, 1);
-                    const mesNome = mesesAbreviados[dataParcela.getMonth()];
+                    const mesIndexNum = dataParcela.getMonth();
                     const anoNum = dataParcela.getFullYear();
-                    const vencimentoFormatado = `${mesNome}/${String(anoNum).substring(2)}`;
+                    const vencimentoFormatado = `${mesesAbreviados[mesIndexNum]}/${String(anoNum).substring(2)}`;
 
+                    // FILTRO 1: Ano do Vencimento
+                    if (filtroAnoAtual !== "todos" && anoNum.toString() !== filtroAnoAtual) {
+                        continue;
+                    }
+
+                    // FILTRO 2: Mês do Vencimento
+                    if (filtroMesAtual !== "todos" && mesIndexNum.toString() !== filtroMesAtual) {
+                        continue;
+                    }
+
+                    // FILTRO 3: Busca Textual
                     const fornecedor = (item.fornecedor || "-").toString().toLowerCase();
                     const descText = (item.descricao || "-").toString().toLowerCase();
                     const catText = categoriaReal.toLowerCase();
-                    
                     if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual)) {
                         continue;
                     }
@@ -453,7 +555,7 @@
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
 
-                    const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
+                    const chaveCronologica = `${anoNum}-${String(mesIndexNum + 1).padStart(2, '0')}`;
                     if (!mesesCronologicosObj[chaveCronologica]) {
                         mesesCronologicosObj[chaveCronologica] = { labelExibicao: vencimentoFormatado, total: 0 };
                     }
