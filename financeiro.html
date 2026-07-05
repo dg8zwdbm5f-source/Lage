@@ -332,14 +332,14 @@
     </div>
 
     <script>
-    // CONEXÃO DIRETA COM A PLANILHA (SEM PRECISAR DE API.JS EXTERNO)
-async function carregarDados() {
-    // COLE O SEU LINK TERMINADO EM /exec AQUI NO LOGAR DO /dev:
-    const URL_DIRETA = "COLE_AQUI_O_SEU_LINK_TERMINADO_EM_EXEC"; 
-    
-    const resposta = await fetch(URL_DIRETA);
-    return await resposta.json();
-}
+        // CONEXÃO DIRETA COM A PLANILHA (SEM DEPENDER DO API.JS EXTERNO)
+        async function carregarDados() {
+            // SUBSTITUA ESTE LINK ABAIXO PELO SEU LINK DO WEB APP TERMINADO EM /exec
+            const URL_DIRETA = "COLE_AQUI_O_LINK_DA_SUA_IMPLANTACAO_TERMINADO_EM_EXEC"; 
+            
+            const resposta = await fetch(URL_DIRETA);
+            return await resposta.json();
+        }
 
         let chartPizza = null, chartBarras = null, chartMensal = null;
         let dadosGlobais = [];
