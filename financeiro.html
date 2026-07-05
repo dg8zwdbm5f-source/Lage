@@ -72,7 +72,6 @@
             color: var(--warning);
         }
 
-        /* --- Card de Saldo --- */
         .balance-card {
             background: linear-gradient(135deg, #181424 0%, var(--bg-surface) 100%);
             border: 1px solid rgba(153, 109, 255, 0.2);
@@ -132,7 +131,6 @@
         .sub-item.pago span { color: var(--success); }
         .sub-item.orcamento span { color: var(--warning); }
 
-        /* --- Progress Bar de Orçamento --- */
         .budget-progress-container {
             margin-top: 14px;
         }
@@ -156,7 +154,6 @@
             transition: width 0.5s ease-out;
         }
 
-        /* --- Busca --- */
         .search-box {
             position: relative;
         }
@@ -182,7 +179,6 @@
             opacity: 0.6;
         }
 
-        /* --- Tabs --- */
         .chart-tabs {
             display: flex;
             background: var(--bg-surface);
@@ -228,7 +224,6 @@
             display: block;
         }
 
-        /* --- Lista Extrato --- */
         .section-title {
             font-size: 0.95rem;
             font-weight: 600;
@@ -403,6 +398,25 @@
             }
         });
 
+        // Função auxiliar para ler chaves do objeto sem se importar com acentos ou maiúsculas
+        function obterValorFlexivel(obj, listaVariacoes, valorPadrao = 0) {
+            for (let variacao of listaVariacoes) {
+                if (obj[variacao] !== undefined && obj[variacao] !== null) {
+                    return obj[variacao];
+                }
+            }
+            // Procura alternativa limpando tudo se não achou direto
+            const chaves = Object.keys(obj);
+            for (let chave of chaves) {
+                const chaveLimpa = chave.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                for (let v of listaVariacoes) {
+                    const vLimpa = v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (chaveLimpa === vLimpa) return obj[chave];
+                }
+            }
+            return valorPadrao;
+        }
+
         function switchTab(index) {
             document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
             document.querySelectorAll('.chart-container').forEach((cont, i) => cont.classList.toggle('active', i === index));
@@ -411,18 +425,20 @@
         function processarPainel(dadosParaExibir) {
             let totalGasto = 0, totalPago = 0, totalOrcamento = 0;
             const parcelasProcessadas = [];
-            const categoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
+            const canvasCategoriasObj = {}, centrosObj = {}, mesesCronologicosObj = {};
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
             dadosParaExibir.forEach(item => {
-                const totalParcelas = parseInt(item.parcela) || 1;
-                const valorParcela = Number(item.valor) || 0;
-                const valorOrcamento = Number(item.orcamento) || 0; // Capturando coluna real de Orçamento
+                const totalParcelas = parseInt(obterValorFlexivel(item, ['parcela', 'Parcela'], 1)) || 1;
+                const valorParcela = Number(obterValorFlexivel(item, ['valor', 'Valor'], 0)) || 0;
                 
-                // Mapeamento de Categoria oficial ignorando subcategoria
-                const categoriaReal = item.categoria && item.categoria.trim() !== "" ? item.categoria.trim() : "Outros";
+                // Mapeador flexível para capturar Categoria e Orçamento independente de acento/caixa
+                const categoriaRealRaw = obterValorFlexivel(item, ['categoria', 'Categoria', 'CATEGORIA'], 'Outros');
+                const categoriaReal = (categoriaRealRaw && typeof categoriaRealRaw === "string" && categoriaRealRaw.trim() !== "") ? categoriaRealRaw.trim() : "Outros";
+                
+                const valorOrcamento = Number(obterValorFlexivel(item, ['orcamento', 'Orcamento', 'Orçamento', 'ORÇAMENTO'], 0)) || 0;
 
-                let dataTexto = item.dataCompra ? item.dataCompra.toString().trim() : "";
+                let dataTexto = obterValorFlexivel(item, ['dataCompra', 'DataCompra', 'data', 'Data'], "").toString().trim();
                 let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
 
                 if (dataTexto) {
@@ -440,7 +456,7 @@
                 const objetoDataCompra = new Date(anoBase, mesBase, diaBase);
                 const dataCompraFormatada = `${String(diaBase).padStart(2, '0')}/${String(mesBase + 1).padStart(2, '0')}`;
 
-                let vencimentoTexto = item.vencimento ? item.vencimento.toString().trim() : "";
+                let vencimentoTexto = obterValorFlexivel(item, ['vencimento', 'Vencimento', 'venc', 'Venc'], "").toString().trim();
                 let mesVencimentoBase = mesBase, anoVencimentoBase = anoBase;
 
                 if (vencimentoTexto) {
@@ -463,9 +479,8 @@
                     const anoNum = dataParcela.getFullYear();
                     const vencimentoFormatado = `${mesNome}/${String(anoNum).substring(2)}`;
 
-                    // Filtro inteligente mobile
-                    const fornecedor = item.fornecedor ? item.fornecedor.toString().toLowerCase() : "";
-                    const descText = item.descricao ? item.descricao.toString().toLowerCase() : "";
+                    const fornecedor = obterValorFlexivel(item, ['fornecedor', 'Fornecedor'], "-").toString().toLowerCase();
+                    const descText = obterValorFlexivel(item, ['descricao', 'Descricao', 'Descrição'], "-").toString().toLowerCase();
                     const catText = categoriaReal.toLowerCase();
                     
                     if (filtroTextoAtual !== "" && !fornecedor.includes(filtroTextoAtual) && !descText.includes(filtroTextoAtual) && !catText.includes(filtroTextoAtual)) {
@@ -473,21 +488,24 @@
                     }
 
                     totalGasto += valorParcela;
-                    totalOrcamento += (valorOrcamento / totalParcelas); // Dilui o orçamento se houver divisão lógica
+                    totalOrcamento += (valorOrcamento / totalParcelas);
 
-                    let statusParcela = item.status ? item.status.trim().toLowerCase() : "pendente";
-                    let statusBadgeTexto = item.status || "Pendente";
+                    let statusParcela = obterValorFlexivel(item, ['status', 'Status'], "pendente").toString().trim().toLowerCase();
+                    let statusBadgeTexto = obterValorFlexivel(item, ['status', 'Status'], "Pendente");
                     if (i > 0) { statusParcela = "pendente"; statusBadgeTexto = "Pendente"; }
 
                     if (statusParcela === "pago" || statusParcela === "efetuado") {
                         totalPago += valorParcela;
                     }
 
-                    const descCustomizada = totalParcelas > 1 ? `${item.descricao || "Item"} (${i + 1}/${totalParcelas})` : (item.descricao || "-");
-                    const centro = item.centroCusto && item.centroCusto.trim() !== "" ? item.centroCusto.trim() : "Geral";
+                    const descOriginal = obterValorFlexivel(item, ['descricao', 'Descricao', 'Descrição'], "Item");
+                    const descCustomizada = totalParcelas > 1 ? `${descOriginal} (${i + 1}/${totalParcelas})` : descOriginal;
                     
-                    // Consolidação focada na nova Categoria Principal
-                    categoriasObj[categoriaReal] = (categoriasObj[categoriaReal] || 0) + valorParcela;
+                    const centroCustoRaw = obterValorFlexivel(item, ['centroCusto', 'CentroCusto', 'centro', 'Centro de Custo'], "Geral");
+                    const centro = (centroCustoRaw && typeof centroCustoRaw === "string" && centroCustoRaw.trim() !== "") ? centroCustoRaw.trim() : "Geral";
+                    const conta = obterValorFlexivel(item, ['conta', 'Conta'], "-");
+                    
+                    canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
 
                     const chaveCronologica = `${anoNum}-${String(dataParcela.getMonth() + 1).padStart(2, '0')}`;
@@ -500,11 +518,11 @@
                         dataOrdenacao: objetoDataCompra,
                         dataCompraStr: dataCompraFormatada,
                         vencimentoStr: vencimentoFormatado,
-                        fornecedor: item.fornecedor || "Fornecedor",
+                        fornecedor: obterValorFlexivel(item, ['fornecedor', 'Fornecedor'], "-"),
                         descricao: descCustomizada,
                         valor: valorParcela,
                         categoria: categoriaReal,
-                        conta: item.conta || "Conta",
+                        conta: conta,
                         statusClasse: statusParcela,
                         statusTexto: statusBadgeTexto
                     });
@@ -530,19 +548,16 @@
                 </div>
             `);
 
-            // Atualização dos elementos na tela
             document.getElementById("tabelaCorpo").innerHTML = wrapperTabela.join("") || '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhum item encontrado</p>';
             document.getElementById("totalGasto").innerText = "R$ " + totalGasto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
             document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             document.getElementById("totalOrcamento").innerText = "R$ " + totalOrcamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-            // Cálculo dinâmico da barra de progresso do Orçamento
             const porcentagemUso = totalOrcamento > 0 ? Math.min(Math.round((totalGasto / totalOrcamento) * 100), 100) : 0;
             document.getElementById("budgetPercent").innerText = porcentagemUso + "%";
             document.getElementById("progressBarFill").style.width = porcentagemUso + "%";
 
-            // Troca de cor da barra caso estoure o orçamento
             if(porcentagemUso >= 100) {
                 document.getElementById("progressBarFill").style.backgroundColor = "var(--danger)";
             } else if (porcentagemUso >= 80) {
@@ -551,17 +566,16 @@
                 document.getElementById("progressBarFill").style.backgroundColor = "var(--brand)";
             }
 
-            atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj);
+            atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj);
         }
 
-        function atualizarGraficosPainel(categoriasObj, centrosObj, mesesCronologicosObj) {
+        function atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj) {
             const coresPaleta = ['#996dff', '#00b37e', '#f75a68', '#ffb800', '#00d2df', '#ff79c6', '#a8a8b3'];
             const configPadraoScales = {
                 x: { grid: { display: false }, ticks: { color: '#6e6e77', font: { size: 10 } } },
                 y: { grid: { color: '#22222a' }, ticks: { color: '#6e6e77', font: { size: 10 } } }
             };
 
-            // 1. Gráfico de Evolução Mensal
             try {
                 const chaves = Object.keys(mesesCronologicosObj).sort();
                 const labels = chaves.map(c => mesesCronologicosObj[c].labelExibicao);
@@ -578,20 +592,18 @@
                 });
             } catch (e) {}
 
-            // 2. Gráfico de Categorias Reais (Novo Mapeamento oficial)
             try {
                 if (chartPizza) chartPizza.destroy();
                 chartPizza = new Chart(document.getElementById('graficoCategorias').getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: Object.keys(categoriasObj),
-                        datasets: [{ data: Object.values(categoriasObj), backgroundColor: coresPaleta, borderWidth: 0 }]
+                        labels: Object.keys(canvasCategoriasObj),
+                        datasets: [{ data: Object.values(canvasCategoriasObj), backgroundColor: coresPaleta, borderWidth: 0 }]
                     },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#c5c5d0', font: { size: 10 }, boxWidth: 10 } } } }
                 });
             } catch (e) {}
 
-            // 3. Gráfico de Centros de Custo
             try {
                 if (chartBarras) chartBarras.destroy();
                 chartBarras = new Chart(document.getElementById('graficoCentroCusto').getContext('2d'), {
