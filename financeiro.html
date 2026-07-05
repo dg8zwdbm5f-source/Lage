@@ -131,29 +131,6 @@
         .sub-item.pago span { color: var(--success); }
         .sub-item.orcamento span { color: var(--warning); }
 
-        .budget-progress-container {
-            margin-top: 14px;
-        }
-        .budget-progress-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-        .progress-bar-bg {
-            background: var(--bg-input);
-            height: 6px;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            background: var(--brand);
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s ease-out;
-        }
-
         .search-box {
             position: relative;
         }
@@ -325,16 +302,6 @@
                     <span id="totalOrcamento">-</span>
                 </div>
             </div>
-
-            <div class="budget-progress-container" style="display:none;">
-                <div class="budget-progress-header">
-                    <span>Uso do Orçamento</span>
-                    <span id="budgetPercent">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progressBarFill"></div>
-                </div>
-            </div>
         </section>
 
         <section class="search-box">
@@ -410,14 +377,16 @@
             const mesesAbreviados = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
             dadosParaExibir.forEach(item => {
+                // Descarta a linha de títulos caso o script a envie por engano
+                if (!item.dataCompra || item.dataCompra === "Data Compra") return;
+
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
                 
-                // Mapeia diretamente o campo correto enviado pelo Apps Script estruturado pelas colunas
+                // Mapeamento idêntico à resposta JSON estruturada
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
-                const orcamentoTexto = item.orcamento && item.orcamento.toString().trim() !== "" ? item.orcamento.trim() : "-";
 
-                let dataTexto = (item.dataCompra || item.data || "").toString().trim();
+                let dataTexto = (item.dataCompra || "").toString().trim();
                 let diaBase = 1, mesBase = new Date().getMonth(), anoBase = new Date().getFullYear();
 
                 if (dataTexto) {
@@ -482,6 +451,7 @@
                     const centro = item.centroCusto && item.centroCusto.toString().trim() !== "" ? item.centroCusto.trim() : "Geral";
                     const conta = item.conta || "-";
                     
+                    // Incrementa os dicionários para os gráficos
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
 
@@ -530,9 +500,9 @@
             document.getElementById("qtdeLancamentos").innerText = wrapperTabela.length + " lançamentos";
             document.getElementById("totalPago").innerText = "R$ " + totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
             
-            // Exibe a classificação do último orçamento inserido ou mantém dinâmico
             if (dadosParaExibir.length > 0) {
-               document.getElementById("totalOrcamento").innerText = dadosParaExibir[0].orcamento || "-";
+               const valido = dadosParaExibir.find(d => d.dataCompra !== "Data Compra");
+               document.getElementById("totalOrcamento").innerText = (valido && valido.orcamento) ? valido.orcamento : "-";
             }
 
             atualizarGraficosPainel(canvasCategoriasObj, centrosObj, mesesCronologicosObj);
@@ -586,6 +556,6 @@
             } catch (e) {}
         }
     </script>
-    <script src="js/api.js"></script>
+    <script src="js/api.js?v=5"></script>
 </body>
 </html>
