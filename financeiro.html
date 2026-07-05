@@ -227,10 +227,10 @@
             color: #ffffff;
         }
 
-        /* --- Container de Gráficos --- */
+        /* --- Container de Gráficos (Grid Adaptável de 1 a 3 colunas) --- */
         .container-graficos {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 24px;
             margin-bottom: 32px;
         }
@@ -317,15 +317,8 @@
             justify-content: center;
         }
 
-/* Atualize ou adicione esta linha no seu CSS para pintar o "EFETUADO" de verde */
-.status-badge.pago, .status-badge.efetuado { 
-    background-color: rgba(0, 179, 126, 0.1); 
-    color: #04d361; 
-}
-.status-badge.pendente { 
-    background-color: rgba(247, 90, 104, 0.1); 
-    color: #f75a68; 
-}
+        .status-badge.pago, .status-badge.efetuado { background-color: rgba(0, 179, 126, 0.1); color: #04d361; }
+        .status-badge.pendente { background-color: rgba(247, 90, 104, 0.1); color: #f75a68; }
     </style>
 </head>
 <body>
@@ -389,6 +382,12 @@
 
         <section class="container-graficos">
             <div class="bloco-grafico">
+                <h3>Gastos por Mês Vencimento</h3>
+                <div class="canvas-container">
+                    <canvas id="graficoMensal"></canvas>
+                </div>
+            </div>
+            <div class="bloco-grafico">
                 <h3>Gastos por Subcategoria</h3>
                 <div class="canvas-container">
                     <canvas id="graficoSubcategorias"></canvas>
@@ -427,8 +426,8 @@
         </section>
     </main>
 
-    <script src="js/api.js?v=5.0"></script>
-    <script src="js/filtros.js?v=5.0"></script>
-    <script src="js/financeiro.js?v=5.0"></script>
+    <script src="js/api.js?v=6.0"></script>
+    <script src="js/filtros.js?v=6.0"></script>
+    <script src="js/financeiro.js?v=6.0"></script>
 </body>
 </html>
