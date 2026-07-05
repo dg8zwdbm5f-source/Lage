@@ -475,8 +475,6 @@
                 const totalParcelas = parseInt(item.parcela) || 1;
                 const valorParcela = Number(item.valor) || 0;
                 const categoriaReal = item.categoria && item.categoria.toString().trim() !== "" ? item.categoria.trim() : "Outros";
-                
-                // Mapeia o tipo de orçamento
                 const orcamentoReal = item.orcamento && item.orcamento.toString().trim() !== "" ? item.orcamento.trim() : "Não Informado";
 
                 let dataTexto = (item.dataCompra || "").toString().trim();
@@ -551,7 +549,6 @@
                     canvasCategoriasObj[categoriaReal] = (canvasCategoriasObj[categoriaReal] || 0) + valorParcela;
                     centrosObj[centro] = (centrosObj[centro] || 0) + valorParcela;
                     
-                    // Somando os valores agrupados por tipo de Orçamento
                     orcamentosObj[orcamentoReal] = (orcamentosObj[orcamentoReal] || 0) + valorParcela;
 
                     const chaveCronologica = `${anoNum}-${String(mesIndexNum + 1).padStart(2, '0')}`;
@@ -654,18 +651,86 @@
                 });
             } catch (e) {}
 
-            // RENDERIZAÇÃO DO NOVO GRÁFICO DE TIPO DE ORÇAMENTO (TIPO ROSCA/DOUGHNUT)
+            // MODIFICAÇÃO: GRÁFICO DE BARRAS HORIZONTAIS EMPILHADAS (TETO 8900)
             try {
                 if (chartOrcamentos) chartOrcamentos.destroy();
-                chartOrcamentos = new Chart(document.getElementById('graficoOrcamentos').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(orcamentosObj),
-                        datasets: [{ data: Object.values(orcamentosObj), backgroundColor: ['#ffb800', '#ff79c6', '#00d2df', '#996dff', '#a8a8b3'], borderWidth: 0 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#c5c5d0', font: { size: 10 }, boxWidth: 10 } } } }
+                
+                const VALOR_TETO = 8900;
+                const datasetsConfig = [];
+                let somaAtualOrcamentos = 0;
+                
+                // Cria um dataset para cada tipo de orçamento encontrado
+                Object.keys(orcamentosObj).forEach((tipo, index) => {
+                    const valor = orcamentosObj[tipo];
+                    somaAtualOrcamentos += valor;
+                    
+                    datasetsConfig.push({
+                        label: tipo,
+                        data: [valor],
+                        backgroundColor: coresPaleta[index % coresPaleta.length],
+                        barThickness: 35
+                    });
                 });
-            } catch (e) {}
+                
+                // Calcula se ainda resta saldo para atingir os 8900
+                if (somaAtualOrcamentos < VALOR_TETO) {
+                    datasetsConfig.push({
+                        label: 'Saldo Disponível',
+                        data: [VALOR_TETO - somaAtualOrcamentos],
+                        backgroundColor: '#2c2c35', // Cor cinza escura discreta
+                        barThickness: 35
+                    });
+                }
+
+                chartOrcamentos = new Chart(document.getElementById('graficoOrcamentos').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Orçamentos'],
+                        datasets: datasetsConfig
+                    },
+                    options: {
+                        indexAxis: 'y', // Deixa a barra horizontal
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#c5c5d0', font: { size: 10 }, boxWidth: 10 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        let valor = context.raw || 0;
+                                        let pct = ((valor / VALOR_TETO) * 100).toFixed(1);
+                                        return `${label}: R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                max: Math.max(VALOR_TETO, somaAtualOrcamentos), // Se estourar os 8900, a barra expande
+                                grid: { color: '#22222a' },
+                                ticks: {
+                                    color: '#6e6e77',
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return 'R$ ' + value;
+                                    }
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                display: false // Esconde o label lateral para ganhar espaço
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Erro no gráfico de orçamentos:", e);
+            }
         }
     </script>
 </body>
