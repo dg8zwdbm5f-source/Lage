@@ -53,35 +53,30 @@
 
   .ex-card{
     background:var(--panel); border:1px solid var(--line); border-radius:12px;
-    padding:9px 10px; margin-bottom:7px;
+    padding:12px 12px 10px; margin-bottom:9px;
   }
-  .ex-head{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .ex-name{ font-size:13px; font-weight:700; line-height:1.2; }
-  .ex-meta{ display:flex; align-items:center; gap:5px; margin-top:1px; }
-  .ex-target{ font-size:10px; color:var(--text-dim); }
+  .ex-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .ex-name{ font-size:14px; font-weight:700; line-height:1.2; }
+  .ex-meta{ display:flex; align-items:center; gap:5px; margin-top:2px; }
+  .ex-target{ font-size:11px; color:var(--text-dim); }
   .icon{ font-size:11px; }
-  .pr-pill{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); white-space:nowrap; }
+  .pr-pill{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); white-space:nowrap; margin-top:2px; }
   .pr-pill b{ color:var(--accent); }
 
-  .chips{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
-  .chip{
-    display:flex; align-items:center; gap:7px;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:7px 9px;
+  .ex-controls{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  
+  .load-input-wrap{ display:flex; align-items:center; gap:4px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:4px 8px; width:95px; }
+  .load-input-wrap input{ width:100%; background:transparent; border:none; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; text-align:center; padding:0; }
+  .load-input-wrap input:focus{ outline:none; }
+  .load-input-wrap .unit{ font-size:10px; color:var(--text-dim); font-weight:700; }
+
+  .series-row{ display:flex; gap:6px; flex:1; justify-content:flex-end; overflow-x:auto; }
+  .btn-series{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:40px; height:36px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    cursor:pointer; font-weight:700; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);
   }
-  .chip.done{ border-color:var(--ok); }
-  .chip .idx{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); flex:0 0 auto; }
-  .chip .field{ flex:1; display:flex; align-items:baseline; gap:3px; min-width:0; }
-  .chip input{
-    width:100%; min-width:0; background:transparent; border:none; color:var(--text); font-family:'JetBrains Mono',monospace;
-    font-size:16px; font-weight:700; text-align:left; padding:2px 0;
-  }
-  .chip input:focus{ outline:none; }
-  .chip .unit{ font-size:10px; color:var(--text-dim); flex:0 0 auto; }
-  .chip .check{
-    width:28px; height:28px; flex:0 0 auto; border-radius:8px; border:1px solid var(--line); background:var(--bg);
-    color:var(--text-dim); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .chip .check.done{ background:var(--ok); border-color:var(--ok); color:#0F1A15; }
+  .btn-series.done{ background:var(--ok); border-color:var(--ok); color:#0F1A15; }
 
   .rest-bar{
     position:fixed; left:14px; right:14px; bottom:80px; z-index:35;
@@ -186,7 +181,7 @@
 
 <script>
 const REST_SECONDS = 90;
-const EXEC_SECONDS = 30; // tempo médio estimado de execução por série
+const EXEC_SECONDS = 30;
 
 const DAYS = [
   { id:'d1', label:'D1', name:'Upper A', tag:'Peito / Costas — força',
@@ -247,7 +242,7 @@ async function loadState(){
       const parsed = JSON.parse(raw);
       state = Object.assign({ logs:{}, sessions:{}, lastLoad:{} }, parsed);
     }
-  }catch(e){ /* sem dados salvos ainda */ }
+  }catch(e){}
   render();
 }
 
@@ -293,7 +288,6 @@ function renderDayNav(){
 function renderFreqTrack(){
   const track = document.getElementById('freqTrack');
   track.innerHTML = '';
-  const doneToday = Object.keys(state.sessions).filter(k=>k.endsWith(todayKey()));
   DAYS.forEach(d=>{
     const dot = document.createElement('div');
     const hitRecently = Object.entries(state.sessions).some(([k,s])=> s.dayId===d.id);
@@ -327,6 +321,7 @@ function renderExercises(){
   currentDay.exercises.forEach(ex=>{
     const sets = state.logs[logKey][ex.id];
     const pr = bestSetFor(ex.id);
+    const currentGlobalLoad = sets[0]?.load || state.lastLoad[ex.id] || '';
 
     const card = document.createElement('div');
     card.className = 'ex-card';
@@ -342,37 +337,43 @@ function renderExercises(){
         </div>
         <div class="pr-pill">${pr ? `PR <b>${pr}kg</b>` : ''}</div>
       </div>
-      <div class="chips" data-ex="${ex.id}"></div>
-    `;
-    const chipsWrap = card.querySelector('.chips');
-    sets.forEach((s, i)=>{
-      const chip = document.createElement('div');
-      chip.className = 'chip' + (s.done ? ' done' : '');
-      chip.innerHTML = `
-        <span class="idx">S${i+1}</span>
-        <div class="field">
-          <input type="number" inputmode="decimal" placeholder="0" value="${s.load}">
+      <div class="ex-controls">
+        <div class="load-input-wrap">
+          <input type="number" inputmode="decimal" placeholder="0" value="${currentGlobalLoad}">
           <span class="unit">kg</span>
         </div>
-        <div class="check ${s.done ? 'done' : ''}">✓</div>
-      `;
-      const input = chip.querySelector('input');
-      const check = chip.querySelector('.check');
-      input.oninput = (e)=>{
-        s.load = e.target.value;
-        if(e.target.value) state.lastLoad[ex.id] = e.target.value;
-        saveState();
-      };
-      check.onclick = ()=>{
+        <div class="series-row" data-ex="${ex.id}"></div>
+      </div>
+    `;
+
+    const globalInput = card.querySelector('.load-input-wrap input');
+    globalInput.oninput = (e) => {
+      const newLoad = e.target.value;
+      if (newLoad) state.lastLoad[ex.id] = newLoad;
+      sets.forEach(s => { s.load = newLoad; });
+      saveState();
+    };
+
+    const seriesRow = card.querySelector('.series-row');
+    sets.forEach((s, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn-series' + (s.done ? ' done' : '');
+      btn.textContent = `S${i+1}`;
+      
+      btn.onclick = ()=>{
         s.done = !s.done;
-        chip.classList.toggle('done', s.done);
-        check.classList.toggle('done', s.done);
+        
+        if (!s.load && globalInput.value) {
+          s.load = globalInput.value;
+        }
+
+        btn.classList.toggle('done', s.done);
         if(s.done) startRest();
         saveState();
         updateFinishBtn();
         updateETA();
       };
-      chipsWrap.appendChild(chip);
+      seriesRow.appendChild(btn);
     });
 
     list.appendChild(card);
